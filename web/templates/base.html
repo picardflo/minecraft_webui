@@ -254,6 +254,11 @@
     <a href="/settings" class="nav-link {% if '/settings' in request.url.path or request.url.path == '/login' %}active{% endif %}">
       <span class="material-icons-round">settings</span> Config
     </a>
+    {% if request.cookies.get('mc_session') %}
+    <a href="/logout" class="nav-link" style="color:var(--error)" title="Déconnexion">
+      <span class="material-icons-round">logout</span>
+    </a>
+    {% endif %}
   </div>
 </nav>
 

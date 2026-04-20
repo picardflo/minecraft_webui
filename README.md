@@ -2,7 +2,7 @@
 
 Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications Discord et console RCON.
 
-![Version](https://img.shields.io/badge/version-1.6.0-green)
+![Version](https://img.shields.io/badge/version-1.6.1-green)
 ![Docker](https://img.shields.io/badge/docker-compose-blue)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 
@@ -125,6 +125,10 @@ git pull && docker compose up -d --build web
 ```
 
 ## Changelog
+
+### v1.6.1
+- **UI** : bouton Déconnexion dans la navbar (visible uniquement quand connecté en admin)
+- **UI** : page `/settings` en 2 colonnes (config à gauche, maintenance à droite)
 
 ### v1.6.0
 - **Feat** : section Maintenance dans `/settings` — purge historique connexions (> 30j / 90j / tout), purge métriques charts, VACUUM SQLite avec affichage taille DB
