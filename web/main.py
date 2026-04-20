@@ -3,6 +3,7 @@ import base64
 import json
 import urllib.request
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, Form, Request
@@ -20,6 +21,7 @@ from settings_store import read as read_settings, write as write_settings
 from system import get_system_metrics
 
 _live_players: dict[str, str] = {}
+_server_online_since: str | None = None
 
 
 async def player_tracker() -> None:
@@ -40,11 +42,38 @@ async def player_tracker() -> None:
         await asyncio.sleep(30)
 
 
+async def metrics_recorder() -> None:
+    global _server_online_since
+    was_online = False
+    while True:
+        await asyncio.sleep(300)
+        try:
+            status, metrics = await asyncio.gather(
+                get_server_status(),
+                asyncio.to_thread(get_system_metrics),
+            )
+            is_online = status.get("online", False)
+            if is_online and not was_online:
+                _server_online_since = datetime.now(timezone.utc).isoformat()
+            elif not is_online:
+                _server_online_since = None
+            was_online = is_online
+            await db.record_metrics(
+                metrics.get("cpu", 0),
+                metrics.get("ram_pct", 0),
+                status.get("players_online", 0),
+            )
+        except Exception as e:
+            print(f"[metrics] {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    task = asyncio.create_task(player_tracker())
+    t1 = asyncio.create_task(player_tracker())
+    t2 = asyncio.create_task(metrics_recorder())
     yield
-    task.cancel()
+    t1.cancel()
+    t2.cancel()
 
 
 app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None)
@@ -70,7 +99,8 @@ async def stream_dashboard(request: Request):
                 get_server_status(),
                 asyncio.to_thread(get_system_metrics),
             )
-            yield {"data": json.dumps({"status": status, "metrics": metrics})}
+            yield {"data": json.dumps({"status": status, "metrics": metrics,
+                                       "online_since": _server_online_since})}
             await asyncio.sleep(5)
     return EventSourceResponse(generate())
 
@@ -167,6 +197,24 @@ async def player_ban(request: Request):
         f"ban {name}",
     )
     return JSONResponse({"response": result})
+
+
+@app.get("/stats", response_class=HTMLResponse)
+async def stats_page(request: Request):
+    player_stats, peak_hours = await asyncio.gather(
+        db.get_player_stats(),
+        db.get_peak_hours(),
+    )
+    return templates.TemplateResponse("stats.html", {
+        "request": request,
+        "player_stats": player_stats,
+        "peak_hours": peak_hours,
+    })
+
+
+@app.get("/api/metrics/history")
+async def metrics_history(hours: int = 24):
+    return JSONResponse(await db.get_metrics_history(hours))
 
 
 @app.get("/history", response_class=HTMLResponse)

@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Statistiques{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1><span class="material-icons-round">bar_chart</span> Statistiques</h1>
+</div>
+
+<!-- Top joueurs -->
+<p class="card-title">Temps de jeu</p>
+{% if player_stats %}
+<div class="card mb-6" style="padding:0;overflow:hidden">
+  <table style="width:100%;border-collapse:collapse">
+    <thead>
+      <tr style="background:var(--surface-var);border-bottom:1px solid var(--outline-var)">
+        <th style="padding:12px 20px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em">#</th>
+        <th style="padding:12px 20px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em">Joueur</th>
+        <th style="padding:12px 20px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em">Sessions</th>
+        <th style="padding:12px 20px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em">Temps total</th>
+        <th style="padding:12px 20px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in player_stats %}
+      {% set s = p.total_seconds %}
+      {% set h = (s // 3600) %}
+      {% set m = ((s % 3600) // 60) %}
+      <tr style="border-bottom:1px solid var(--outline-var)">
+        <td style="padding:11px 20px;font-size:13px;color:var(--text-muted);font-weight:700">{{ loop.index }}</td>
+        <td style="padding:11px 20px">
+          <div style="display:flex;align-items:center;gap:10px">
+            {% if p.uuid %}
+            <img src="https://mc-heads.net/avatar/{{ p.uuid }}/24.png" width="24" height="24" style="image-rendering:pixelated;border-radius:3px">
+            {% else %}
+            <div style="width:24px;height:24px;background:var(--surface-high);border-radius:3px"></div>
+            {% endif %}
+            <span style="font-weight:700;font-size:14px">{{ p.player }}</span>
+          </div>
+        </td>
+        <td style="padding:11px 20px;font-size:14px">{{ p.sessions }}</td>
+        <td style="padding:11px 20px;font-size:14px;font-weight:700;color:var(--primary)">
+          {% if s == 0 %}<span style="color:var(--text-muted)">—</span>
+          {% elif h > 0 %}{{ h }}h {{ '%02d'|format(m) }}min
+          {% else %}{{ m }}min{% endif %}
+        </td>
+        <td style="padding:11px 20px;width:160px">
+          {% if p.total_seconds > 0 %}
+          {% set max_s = player_stats[0].total_seconds %}
+          {% set pct = (p.total_seconds / max_s * 100)|int %}
+          <div class="progress-track" style="margin:0">
+            <div class="progress-bar bar-green" style="width:{{ pct }}%"></div>
+          </div>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card mb-6" style="text-align:center;padding:40px">
+  <p style="color:var(--text-muted)">Aucune donnée — les stats s'alimentent au fil des connexions.</p>
+</div>
+{% endif %}
+
+<!-- Heures de pointe -->
+<p class="card-title">Heures de pointe (connexions)</p>
+<div class="card mb-6">
+  <canvas id="peak-chart" height="80"></canvas>
+</div>
+
+<!-- Historique CPU / RAM -->
+<p class="card-title">Historique ressources — 24h</p>
+<div class="card">
+  <canvas id="metrics-chart" height="80"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+Chart.defaults.color = '#7e8494';
+Chart.defaults.borderColor = '#25282f';
+
+const peakData = {{ peak_hours | tojson }};
+
+new Chart(document.getElementById('peak-chart'), {
+    type: 'bar',
+    data: {
+        labels: peakData.map(d => d.hour),
+        datasets: [{
+            label: 'Connexions',
+            data: peakData.map(d => d.count),
+            backgroundColor: 'rgba(90,171,40,.55)',
+            borderColor: 'rgba(90,171,40,.9)',
+            borderWidth: 1,
+            borderRadius: 3,
+        }]
+    },
+    options: {
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { color: '#25282f' } },
+            y: { grid: { color: '#25282f' }, ticks: { stepSize: 1 } }
+        }
+    }
+});
+
+fetch('/api/metrics/history?hours=24').then(r => r.json()).then(data => {
+    if (!data.length) return;
+    new Chart(document.getElementById('metrics-chart'), {
+        type: 'line',
+        data: {
+            labels: data.map(d => {
+                const t = new Date(d.timestamp + 'Z');
+                return t.getHours() + 'h' + t.getMinutes().toString().padStart(2,'0');
+            }),
+            datasets: [
+                {
+                    label: 'CPU %',
+                    data: data.map(d => d.cpu),
+                    borderColor: '#5aab28', backgroundColor: 'rgba(90,171,40,.08)',
+                    tension: 0.3, pointRadius: 0, fill: true,
+                },
+                {
+                    label: 'RAM %',
+                    data: data.map(d => d.ram_pct),
+                    borderColor: '#5b9bd5', backgroundColor: 'rgba(91,155,213,.08)',
+                    tension: 0.3, pointRadius: 0, fill: true,
+                },
+            ]
+        },
+        options: {
+            plugins: { legend: { labels: { boxWidth: 12 } } },
+            scales: {
+                x: { grid: { color: '#25282f' } },
+                y: { grid: { color: '#25282f' }, min: 0, max: 100, ticks: { callback: v => v + '%' } }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -15,6 +15,15 @@ async def init_db() -> None:
                 timestamp DATETIME DEFAULT (datetime('now'))
             )
         """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS metrics (
+                id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp DATETIME DEFAULT (datetime('now')),
+                cpu       REAL,
+                ram_pct   REAL,
+                players   INTEGER
+            )
+        """)
         await db.commit()
 
 
@@ -23,6 +32,15 @@ async def record_event(player: str, uuid: str | None, event_type: str) -> None:
         await db.execute(
             "INSERT INTO events (player, uuid, type) VALUES (?, ?, ?)",
             (player, uuid, event_type),
+        )
+        await db.commit()
+
+
+async def record_metrics(cpu: float, ram_pct: float, players: int) -> None:
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "INSERT INTO metrics (cpu, ram_pct, players) VALUES (?, ?, ?)",
+            (cpu, ram_pct, players),
         )
         await db.commit()
 
@@ -40,3 +58,55 @@ async def get_events(limit: int = 200, days: int | None = None) -> list[dict]:
             "SELECT * FROM events ORDER BY timestamp DESC LIMIT ?", (limit,)
         ) as cur:
             return [dict(r) for r in await cur.fetchall()]
+
+
+async def get_metrics_history(hours: int = 24) -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT timestamp, cpu, ram_pct, players FROM metrics "
+            "WHERE timestamp >= datetime('now', ?) ORDER BY timestamp ASC",
+            (f"-{hours} hours",),
+        ) as cur:
+            return [dict(r) for r in await cur.fetchall()]
+
+
+async def get_player_stats() -> list[dict]:
+    from datetime import datetime
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT player, uuid, type, timestamp FROM events ORDER BY player, timestamp ASC"
+        ) as cur:
+            rows = [dict(r) for r in await cur.fetchall()]
+
+    players: dict[str, dict] = {}
+    pending_join: dict[str, str] = {}
+
+    for r in rows:
+        name, uuid, etype, ts = r["player"], r["uuid"], r["type"], r["timestamp"]
+        if name not in players:
+            players[name] = {"player": name, "uuid": uuid, "sessions": 0, "total_seconds": 0}
+        if etype == "join":
+            players[name]["sessions"] += 1
+            pending_join[name] = ts
+        elif etype == "leave" and name in pending_join:
+            try:
+                j = datetime.fromisoformat(pending_join.pop(name))
+                l = datetime.fromisoformat(ts)
+                players[name]["total_seconds"] += int((l - j).total_seconds())
+            except Exception:
+                pass
+
+    return sorted(players.values(), key=lambda x: x["total_seconds"], reverse=True)
+
+
+async def get_peak_hours() -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT strftime('%H', timestamp) as hour, COUNT(*) as count "
+            "FROM events WHERE type = 'join' GROUP BY hour ORDER BY hour ASC"
+        ) as cur:
+            rows = {r["hour"]: r["count"] for r in await cur.fetchall()}
+    return [{"hour": f"{h:02d}h", "count": rows.get(f"{h:02d}", 0)} for h in range(24)]

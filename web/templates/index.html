@@ -40,6 +40,10 @@
   <div id="offline-msg" {% if status.online %}style="display:none"{% endif %}>
     <p style="color:var(--error);font-size:14px">Serveur inaccessible — vérifiez que le service est démarré.</p>
   </div>
+  <div id="uptime-row" style="margin-top:14px;font-size:12px;color:var(--text-muted);display:none">
+    <span class="material-icons-round" style="font-size:13px;vertical-align:middle">schedule</span>
+    En ligne depuis <span id="uptime-val" style="color:var(--text-dim);font-weight:700"></span>
+  </div>
 </div>
 
 <p class="card-title">Ressources système</p>
@@ -80,8 +84,22 @@ function updateMetric(id, pct, extra) {
     if (extra) document.getElementById(id + '-extra').textContent = extra;
 }
 
+function fmtUptime(iso) {
+    if (!iso) return null;
+    const secs = Math.floor((Date.now() - new Date(iso)) / 1000);
+    if (secs < 60)   return `${secs}s`;
+    if (secs < 3600) return `${Math.floor(secs/60)}min`;
+    const h = Math.floor(secs/3600), m = Math.floor((secs%3600)/60);
+    return `${h}h ${m.toString().padStart(2,'0')}min`;
+}
+
 new EventSource('/stream/dashboard').onmessage = e => {
-    const {status: s, metrics: m} = JSON.parse(e.data);
+    const {status: s, metrics: m, online_since} = JSON.parse(e.data);
+    document.title = s.online ? `[${s.players_online}] Dashboard — MC` : '[✗] Dashboard — MC';
+    const up = fmtUptime(online_since);
+    const uptimeRow = document.getElementById('uptime-row');
+    if (up && s.online) { document.getElementById('uptime-val').textContent = up; uptimeRow.style.display = ''; }
+    else uptimeRow.style.display = 'none';
     document.getElementById('dot').className  = 'dot ' + (s.online ? 'dot-green' : 'dot-red');
     const chip = document.getElementById('chip');
     chip.className = 'chip ' + (s.online ? 'chip-green' : 'chip-red');

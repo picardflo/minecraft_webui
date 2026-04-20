@@ -8,6 +8,12 @@
   <span class="sub">100 dernières lignes • actualisation 10s</span>
 </div>
 
+<div style="margin-bottom:12px">
+  <input id="log-filter" type="text" placeholder="Filtrer les lignes..."
+    style="width:100%;max-width:400px;background:var(--surface-var);border:1px solid var(--outline-var);border-radius:var(--radius-sm);color:var(--text);padding:9px 14px;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s"
+    oninput="filterLogs()" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--outline-var)'">
+</div>
+
 <div class="log-viewer" id="log">
 {% for line in lines %}
 <div class="{% if 'WARN' in line %}l-warn{% elif 'ERROR' in line or 'FATAL' in line %}l-error{% elif 'INFO' in line %}l-info{% else %}l-default{% endif %}">{{ line }}</div>
@@ -16,5 +22,11 @@
 
 <script>
   document.getElementById('log').scrollTop = 99999;
+  function filterLogs() {
+      const q = document.getElementById('log-filter').value.toLowerCase();
+      document.querySelectorAll('#log > div').forEach(el => {
+          el.style.display = !q || el.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+  }
 </script>
 {% endblock %}
