@@ -341,7 +341,9 @@ async def settings_page(request: Request, saved: bool = False, maintenance: str 
 async def admin_purge_events(request: Request, days: int = Form(0)):
     if not is_authenticated(request):
         return JSONResponse({"error": "Non authentifié"}, status_code=401)
+    global _live_players
     n = await db.purge_events(days if days > 0 else None)
+    _live_players = {}  # force re-log des joueurs actuellement connectés au prochain poll
     return RedirectResponse(f"/settings?maintenance=events_ok&n={n}", status_code=302)
 
 
