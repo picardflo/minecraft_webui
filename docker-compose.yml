@@ -39,9 +39,12 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ${CERT_DIR:-/etc/ssl/home.lan}:/certs:ro
+      - ${CADDYFILE:-Caddyfile}:/etc/caddy/Caddyfile:ro
+      - ./certs:/certs:ro
       - caddy_data:/data
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+      - TLS_EMAIL=${TLS_EMAIL:-}
 
 volumes:
   app_data:

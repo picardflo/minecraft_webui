@@ -1,5 +1,5 @@
-{$DOMAIN:localhost} {
-    tls internal
+{$DOMAIN} {
+    tls {$TLS_EMAIL}
     reverse_proxy web:8000
     encode gzip
 }

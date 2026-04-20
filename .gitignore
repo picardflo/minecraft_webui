@@ -3,3 +3,7 @@ __pycache__/
 *.pyc
 *.pyo
 web/static/heads/*.png
+certs/*.pem
+certs/*.crt
+certs/*.key
+idea.md

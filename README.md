@@ -1,17 +1,21 @@
 # Minecraft WebUI
 
-Dashboard de monitoring pour serveur Minecraft Java, avec notifications Discord et console RCON.
+Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications Discord et console RCON.
+
+![Version](https://img.shields.io/badge/version-1.2.0-green)
+![Docker](https://img.shields.io/badge/docker-compose-blue)
+![Python](https://img.shields.io/badge/python-3.12-blue)
 
 ## Fonctionnalités
 
-- **Dashboard** — statut serveur, latence, joueurs en ligne, ressources système (CPU/RAM/Swap) en temps réel via SSE
-- **Joueurs** — liste des connectés avec skins Minecraft, mise à jour automatique ; clic sur un joueur → modal avec UUID, type de skin, cape ; boutons **Kick / Ban** pour les admins (RCON)
+- **Dashboard** — statut serveur, latence, joueurs en ligne, uptime, ressources système (CPU/RAM/Swap) en temps réel via SSE
+- **Joueurs** — liste des connectés avec skins Minecraft ; clic sur un joueur → modal UUID, type de skin, cape ; **Kick / Ban** admin (RCON)
 - **Historique** — journal des connexions/déconnexions persisté en SQLite (filtres 24h / 7j / 30j)
-- **Journaux** — 100 dernières lignes du log serveur avec coloration par niveau
+- **Statistiques** — temps de jeu par joueur, heures de pointe, historique CPU/RAM 24h (Chart.js)
+- **Journaux** — 100 dernières lignes du log serveur avec coloration par niveau et filtre en temps réel
 - **Notifications Discord** — embed avec skin du joueur envoyé à chaque connexion/déconnexion
 - **Console RCON** — terminal interactif avec mémo des commandes courantes (admin)
 - **Config UI** — webhook Discord et paramètres RCON modifiables depuis l'interface, protégés par mot de passe
-- **Versioning** — version affichée dans le footer (fichier `web/VERSION`)
 
 ## Stack
 
@@ -19,48 +23,75 @@ Dashboard de monitoring pour serveur Minecraft Java, avec notifications Discord 
 |---|---|
 | `web` | FastAPI + Jinja2 + Uvicorn |
 | `discord-notifier` | Polling async + webhooks Discord |
-| `caddy` | Reverse proxy HTTPS (cert wildcard) |
+| `caddy` | Reverse proxy HTTPS |
 
 ## Prérequis
 
-- Docker + Docker Compose installés sur la VM
-- Certificat wildcard `*.home.lan` disponible sur l'hôte
+- Docker + Docker Compose
 - Serveur Minecraft Java avec `enable-status=true` dans `server.properties`
 
 ## Installation
 
 ```bash
-# Cloner le repo
-cd /srv
-git clone ssh://git@gogs.home.lan:2222/fpicard/minecraft_webui.git
+git clone https://github.com/your-username/minecraft_webui.git
 cd minecraft_webui
 
-# Configurer l'environnement
 cp .env.example .env
 nano .env
 
-# Démarrer
 docker compose up -d --build
 ```
 
 ## Configuration (.env)
 
 ```env
-MC_HOST=minecraft.home.lan       # Adresse du serveur Minecraft
-MC_PORT=25565                    # Port Java
+MC_HOST=your.minecraft.server.com   # Adresse du serveur Minecraft
+MC_PORT=25565                        # Port Java (défaut 25565)
 MC_LOG_PATH=/srv/minecraft/server/logs/latest.log
 
-ADMIN_PASSWORD=changeme          # Mot de passe pour /settings et /console
-SECRET_KEY=change-this-secret    # Clé de signature des cookies
+ADMIN_PASSWORD=changeme              # Mot de passe pour /settings et /console
+SECRET_KEY=change-this-to-a-long-random-string
 
-CERT_DIR=/etc/ssl/home.lan       # Dossier contenant fullchain.pem + privkey.pem
+DOMAIN=localhost                     # Domaine utilisé par Caddy
 ```
 
-Le webhook Discord et les paramètres RCON sont configurables directement depuis `/settings`.
+## SSL / TLS
+
+Trois modes disponibles, sélectionnés via `CADDYFILE` dans `.env` :
+
+### Mode 1 — Self-signed (défaut, LAN/local)
+
+Aucune configuration supplémentaire. Caddy génère un certificat local automatiquement.
+
+```env
+DOMAIN=mc.home.lan
+# CADDYFILE non défini → utilise Caddyfile (tls internal)
+```
+
+> Le navigateur affichera un avertissement de sécurité la première fois.
+
+### Mode 2 — Let's Encrypt (domaine public)
+
+Ports 80 et 443 doivent être ouverts et le domaine doit pointer vers votre IP.
+
+```env
+DOMAIN=mc.example.com
+CADDYFILE=Caddyfile.letsencrypt
+TLS_EMAIL=admin@example.com
+```
+
+### Mode 3 — Certificat existant (wildcard, entreprise…)
+
+Déposer `fullchain.pem` et `privkey.pem` dans le dossier `./certs/`.
+
+```env
+DOMAIN=mc.home.lan
+CADDYFILE=Caddyfile.custom
+```
 
 ## Console RCON (optionnel)
 
-Activer dans `/srv/minecraft/server/server.properties` :
+Activer dans `server.properties` :
 
 ```properties
 enable-rcon=true
@@ -70,13 +101,17 @@ rcon.password=VotreMotDePasse
 
 Puis renseigner les paramètres dans l'interface `/settings`.
 
+## Métriques système
+
+Les ressources CPU/RAM sont lues depuis `/proc` de la machine hôte (bind-mount). Les graphiques historiques sont enregistrés toutes les 5 minutes en SQLite.
+
 ## Mise à jour
 
 ```bash
-cd /srv/minecraft_webui && git pull && docker compose up -d --build web
+git pull && docker compose up -d --build web
 ```
 
-## Migration depuis les anciens services
+## Migration depuis des services systemd
 
 Une fois la stack Docker opérationnelle :
 
