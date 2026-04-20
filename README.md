@@ -6,6 +6,16 @@ Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications 
 ![Docker](https://img.shields.io/badge/docker-compose-blue)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 
+## Aperçu
+
+| Dashboard | Joueurs |
+|---|---|
+| ![Dashboard](docs/screenshots/screenshot-dashboard.png) | ![Joueurs](docs/screenshots/screenshot-players.png) |
+
+| Statistiques | Console RCON |
+|---|---|
+| ![Stats](docs/screenshots/screenshot-stats.png) | ![Console](docs/screenshots/screenshot-console.png) |
+
 ## Fonctionnalités
 
 - **Dashboard** — statut serveur, latence, joueurs en ligne, uptime, ressources système (CPU/RAM/Swap) en temps réel via SSE
