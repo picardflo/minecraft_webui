@@ -6,7 +6,12 @@
 {% macro tc(p)  %}{% if p < 50 %}c-green{% elif p < 80 %}c-yellow{% else %}c-red{% endif %}{% endmacro %}
 {% macro pc(ms) %}{% if ms < 100 %}c-green{% elif ms < 200 %}c-yellow{% else %}c-red{% endif %}{% endmacro %}
 
-<div class="card mb-6">
+<div class="card mb-6" style="overflow:hidden;padding:0">
+  {% if has_banner %}
+  <img src="/media/banner" alt="Server banner"
+       style="width:100%;max-height:180px;object-fit:cover;display:block">
+  {% endif %}
+  <div style="padding:22px">
   <div class="flex items-center mb-4" style="gap:12px">
     <span id="dot" class="dot {% if status.online %}dot-green{% else %}dot-red{% endif %}"></span>
     <span style="font-size:16px;font-weight:700">Serveur Minecraft</span>
@@ -43,6 +48,7 @@
   <div id="uptime-row" style="margin-top:14px;font-size:12px;color:var(--text-muted);display:none">
     <span class="material-icons-round" style="font-size:13px;vertical-align:middle">schedule</span>
     En ligne depuis <span id="uptime-val" style="color:var(--text-dim);font-weight:700"></span>
+  </div>
   </div>
 </div>
 

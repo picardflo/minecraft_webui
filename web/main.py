@@ -1,13 +1,14 @@
 import asyncio
 import base64
 import json
+import mimetypes
 import urllib.request
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi import FastAPI, File, Form, Request, UploadFile
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sse_starlette.sse import EventSourceResponse
@@ -82,9 +83,30 @@ templates = Jinja2Templates(directory="templates")
 templates.env.globals["version"] = Path("VERSION").read_text().strip()
 
 
+MEDIA_PATH = Path("/data")
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    p = MEDIA_PATH / "favicon"
+    if not p.exists():
+        raise JSONResponse(status_code=404)
+    cfg = read_settings()
+    return FileResponse(p, media_type=cfg.get("favicon_mime") or "image/png")
+
+
+@app.get("/media/banner", include_in_schema=False)
+async def media_banner():
+    p = MEDIA_PATH / "server_banner"
+    if not p.exists():
+        return JSONResponse(status_code=404, content={})
+    cfg = read_settings()
+    return FileResponse(p, media_type=cfg.get("banner_mime") or "image/png")
 
 
 # ── SSE ──────────────────────────────────────────────────────────────────────
@@ -126,6 +148,7 @@ async def dashboard(request: Request):
     )
     return templates.TemplateResponse("index.html", {
         "request": request, "status": status, "metrics": metrics,
+        "has_banner": (MEDIA_PATH / "server_banner").exists(),
     })
 
 
@@ -271,6 +294,8 @@ async def settings_page(request: Request, saved: bool = False):
     return templates.TemplateResponse("settings.html", {
         "request": request, "cfg": read_settings(),
         "saved": saved, "mc_host": settings.mc_host,
+        "has_banner": (MEDIA_PATH / "server_banner").exists(),
+        "has_favicon": (MEDIA_PATH / "favicon").exists(),
     })
 
 
@@ -282,16 +307,41 @@ async def settings_save(
     rcon_host: str = Form(""),
     rcon_port: int = Form(25575),
     rcon_password: str = Form(""),
+    banner_file: UploadFile = File(None),
+    favicon_file: UploadFile = File(None),
+    remove_banner: str = Form(""),
+    remove_favicon: str = Form(""),
 ):
     if not is_authenticated(request):
         return RedirectResponse("/login", status_code=302)
-    write_settings({
+
+    cfg_update: dict = {
         "webhook_url": webhook_url.strip(),
         "poll_delay": max(10, poll_delay),
         "rcon_host": rcon_host.strip() or settings.mc_host,
         "rcon_port": rcon_port,
         "rcon_password": rcon_password,
-    })
+    }
+
+    if remove_banner:
+        (MEDIA_PATH / "server_banner").unlink(missing_ok=True)
+        cfg_update["banner_mime"] = ""
+    elif banner_file and banner_file.filename:
+        content = await banner_file.read()
+        if content:
+            (MEDIA_PATH / "server_banner").write_bytes(content)
+            cfg_update["banner_mime"] = mimetypes.guess_type(banner_file.filename)[0] or "image/png"
+
+    if remove_favicon:
+        (MEDIA_PATH / "favicon").unlink(missing_ok=True)
+        cfg_update["favicon_mime"] = ""
+    elif favicon_file and favicon_file.filename:
+        content = await favicon_file.read()
+        if content:
+            (MEDIA_PATH / "favicon").write_bytes(content)
+            cfg_update["favicon_mime"] = mimetypes.guess_type(favicon_file.filename)[0] or "image/png"
+
+    write_settings(cfg_update)
     return RedirectResponse("/settings?saved=1", status_code=302)
 
 

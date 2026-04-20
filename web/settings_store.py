@@ -9,6 +9,8 @@ _defaults: dict = {
     "rcon_host": "",
     "rcon_port": 25575,
     "rcon_password": "",
+    "banner_mime": "",
+    "favicon_mime": "",
 }
 
 

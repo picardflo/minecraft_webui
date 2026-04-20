@@ -12,7 +12,40 @@
 </div>
 {% endif %}
 
-<form method="post" action="/settings" style="max-width:560px">
+<form method="post" action="/settings" enctype="multipart/form-data" style="max-width:560px">
+
+  <div class="card mb-6">
+    <p class="card-title">Apparence</p>
+
+    <div class="field">
+      <label>Bannière serveur</label>
+      {% if has_banner %}
+      <img src="/media/banner" alt="bannière actuelle"
+           style="width:100%;max-height:120px;object-fit:cover;border-radius:var(--radius-sm);margin-bottom:8px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-dim);font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer">
+        <input type="checkbox" name="remove_banner" value="1"> Supprimer la bannière
+      </label>
+      {% endif %}
+      <input type="file" name="banner_file" accept="image/*"
+             style="background:var(--surface-var);border:1px solid var(--outline-var);border-radius:var(--radius-sm);color:var(--text);padding:9px 14px;font-size:13px;font-family:inherit">
+      <span class="hint">Image affichée en haut du dashboard (PNG, JPG, GIF…). Largeur recommandée : 1140px.</span>
+    </div>
+
+    <div class="field" style="margin-bottom:0">
+      <label>Favicon</label>
+      {% if has_favicon %}
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <img src="/favicon.ico" width="32" height="32" style="border-radius:4px;image-rendering:pixelated">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-dim);font-weight:600;cursor:pointer">
+          <input type="checkbox" name="remove_favicon" value="1"> Supprimer la favicon
+        </label>
+      </div>
+      {% endif %}
+      <input type="file" name="favicon_file" accept="image/*,.ico"
+             style="background:var(--surface-var);border:1px solid var(--outline-var);border-radius:var(--radius-sm);color:var(--text);padding:9px 14px;font-size:13px;font-family:inherit">
+      <span class="hint">Icône affichée dans l'onglet du navigateur (PNG ou ICO, idéalement 32×32).</span>
+    </div>
+  </div>
 
   <div class="card mb-6">
     <p class="card-title">Notifieur Discord</p>
