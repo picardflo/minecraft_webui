@@ -9,4 +9,3 @@ itsdangerous==2.2.0
 python-multipart==0.0.18
 sse-starlette==1.6.5
 aiosqlite==0.20.0
-mcrcon==0.7.0
