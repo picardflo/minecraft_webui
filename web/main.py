@@ -26,8 +26,9 @@ _server_online_since: str | None = None
 
 
 async def player_tracker() -> None:
-    global _live_players
+    global _live_players, _server_online_since
     await db.init_db()
+    _server_online_since = await db.kv_get("server_online_since")
     while True:
         try:
             current = {p["name"]: p["uuid"] for p in await get_players()}
@@ -56,8 +57,10 @@ async def metrics_recorder() -> None:
             is_online = status.get("online", False)
             if is_online and not was_online:
                 _server_online_since = datetime.now(timezone.utc).isoformat()
-            elif not is_online:
+                await db.kv_set("server_online_since", _server_online_since)
+            elif not is_online and was_online:
                 _server_online_since = None
+                await db.kv_set("server_online_since", None)
             was_online = is_online
             await db.record_metrics(
                 metrics.get("cpu", 0),

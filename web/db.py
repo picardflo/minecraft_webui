@@ -24,6 +24,28 @@ async def init_db() -> None:
                 players   INTEGER
             )
         """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS kv (
+                key   TEXT PRIMARY KEY,
+                value TEXT
+            )
+        """)
+        await db.commit()
+
+
+async def kv_get(key: str) -> str | None:
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute("SELECT value FROM kv WHERE key = ?", (key,)) as cur:
+            row = await cur.fetchone()
+            return row[0] if row else None
+
+
+async def kv_set(key: str, value: str | None) -> None:
+    async with aiosqlite.connect(DB_PATH) as db:
+        if value is None:
+            await db.execute("DELETE FROM kv WHERE key = ?", (key,))
+        else:
+            await db.execute("INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)", (key, value))
         await db.commit()
 
 
