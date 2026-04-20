@@ -5,6 +5,7 @@ Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications 
 ![Version](https://img.shields.io/badge/version-1.7.0-green)
 ![Docker](https://img.shields.io/badge/docker-compose-blue)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
 ## Aperçu
 
@@ -46,7 +47,7 @@ Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications 
 ## Installation
 
 ```bash
-git clone https://github.com/your-username/minecraft_webui.git
+git clone https://github.com/picardflo/minecraft_webui.git
 cd minecraft_webui
 
 cp .env.example .env
@@ -173,4 +174,20 @@ git pull && docker compose up -d --build web
 - [ ] Support multi-serveurs
 - [ ] Mode PWA (Progressive Web App) — installation sur mobile
 - [ ] Notifications push navigateur (connexion/déconnexion joueurs)
+
+## Contribution
+
+Les contributions sont les bienvenues ! Pour proposer une amélioration :
+
+1. Fork le dépôt
+2. Crée une branche (`git checkout -b feature/ma-feature`)
+3. Commit tes modifications (`git commit -m 'feat: ...'`)
+4. Push (`git push origin feature/ma-feature`)
+5. Ouvre une Pull Request
+
+Pour les bugs, ouvre une issue en décrivant les étapes de reproduction.
+
+## Licence
+
+MIT — voir [LICENSE](LICENSE).
 
