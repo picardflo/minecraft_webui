@@ -2,7 +2,7 @@
 
 Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications Discord et console RCON.
 
-![Version](https://img.shields.io/badge/version-1.4.0-green)
+![Version](https://img.shields.io/badge/version-1.5.0-green)
 ![Docker](https://img.shields.io/badge/docker-compose-blue)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 
@@ -18,10 +18,10 @@ Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications 
 
 ## Fonctionnalités
 
-- **Dashboard** — statut serveur, latence, joueurs en ligne, uptime, ressources système (CPU/RAM/Swap) en temps réel via SSE
+- **Dashboard** — statut serveur, latence, joueurs en ligne, uptime serveur/VM, ressources système (CPU/RAM/Swap/Disque + réseau KB/s) en temps réel via SSE
 - **Joueurs** — liste des connectés avec skins Minecraft ; clic sur un joueur → modal UUID, type de skin, cape ; **Kick / Ban** admin (RCON)
 - **Historique** — journal des connexions/déconnexions persisté en SQLite (filtres 24h / 7j / 30j)
-- **Statistiques** — temps de jeu par joueur, heures de pointe, historique CPU/RAM 24h (Chart.js)
+- **Statistiques** — temps de jeu par joueur, heures de pointe, historique CPU/RAM/Disque + réseau/disque I/O 24h (Chart.js)
 - **Journaux** — 100 dernières lignes du log serveur avec coloration par niveau et filtre en temps réel
 - **Notifications Discord** — embed avec skin du joueur envoyé à chaque connexion/déconnexion
 - **Console RCON** — terminal interactif avec mémo des commandes courantes (admin)
@@ -127,7 +127,6 @@ git pull && docker compose up -d --build web
 ## Roadmap
 
 - [ ] Favicon automatique depuis l'icône du serveur Minecraft (status broadcast)
-- [ ] Sparklines CPU/RAM en temps réel sur le dashboard
 - [ ] Gestion de la ban-list depuis l'interface (RCON)
 - [ ] Support multi-serveurs
 - [ ] Mode PWA (Progressive Web App) — installation sur mobile

@@ -69,10 +69,22 @@
   <canvas id="peak-chart" height="80"></canvas>
 </div>
 
-<!-- Historique CPU / RAM -->
+<!-- Historique CPU / RAM / Disque -->
 <p class="card-title">Historique ressources — 24h</p>
-<div class="card">
+<div class="card mb-6">
   <canvas id="metrics-chart" height="80"></canvas>
+</div>
+
+<!-- Réseau I/O -->
+<p class="card-title">Réseau — 24h (KB/s)</p>
+<div class="card mb-6">
+  <canvas id="net-chart" height="80"></canvas>
+</div>
+
+<!-- Disque I/O -->
+<p class="card-title">Disque I/O — 24h (KB/s)</p>
+<div class="card">
+  <canvas id="disk-io-chart" height="80"></canvas>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
@@ -106,35 +118,53 @@ new Chart(document.getElementById('peak-chart'), {
 
 fetch('/api/metrics/history?hours=24').then(r => r.json()).then(data => {
     if (!data.length) return;
+    const labels = data.map(d => {
+        const t = new Date(d.timestamp + 'Z');
+        return t.getHours() + 'h' + t.getMinutes().toString().padStart(2,'0');
+    });
+    const lineOpts = {
+        plugins: { legend: { labels: { boxWidth: 12 } } },
+        scales: {
+            x: { grid: { color: '#25282f' } },
+            y: { grid: { color: '#25282f' } }
+        }
+    };
+
     new Chart(document.getElementById('metrics-chart'), {
         type: 'line',
         data: {
-            labels: data.map(d => {
-                const t = new Date(d.timestamp + 'Z');
-                return t.getHours() + 'h' + t.getMinutes().toString().padStart(2,'0');
-            }),
+            labels,
             datasets: [
-                {
-                    label: 'CPU %',
-                    data: data.map(d => d.cpu),
-                    borderColor: '#5aab28', backgroundColor: 'rgba(90,171,40,.08)',
-                    tension: 0.3, pointRadius: 0, fill: true,
-                },
-                {
-                    label: 'RAM %',
-                    data: data.map(d => d.ram_pct),
-                    borderColor: '#5b9bd5', backgroundColor: 'rgba(91,155,213,.08)',
-                    tension: 0.3, pointRadius: 0, fill: true,
-                },
+                { label: 'CPU %',   data: data.map(d => d.cpu),      borderColor: '#5aab28', backgroundColor: 'rgba(90,171,40,.08)',   tension: 0.3, pointRadius: 0, fill: true },
+                { label: 'RAM %',   data: data.map(d => d.ram_pct),  borderColor: '#5b9bd5', backgroundColor: 'rgba(91,155,213,.08)',  tension: 0.3, pointRadius: 0, fill: true },
+                { label: 'Disque %',data: data.map(d => d.disk_pct), borderColor: '#d98c35', backgroundColor: 'rgba(217,140,53,.08)',  tension: 0.3, pointRadius: 0, fill: true },
             ]
         },
-        options: {
-            plugins: { legend: { labels: { boxWidth: 12 } } },
-            scales: {
-                x: { grid: { color: '#25282f' } },
-                y: { grid: { color: '#25282f' }, min: 0, max: 100, ticks: { callback: v => v + '%' } }
-            }
-        }
+        options: { ...lineOpts, scales: { ...lineOpts.scales, y: { ...lineOpts.scales.y, min: 0, max: 100, ticks: { callback: v => v + '%' } } } }
+    });
+
+    new Chart(document.getElementById('net-chart'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Entrant',  data: data.map(d => d.net_in  || 0), borderColor: '#5aab28', backgroundColor: 'rgba(90,171,40,.08)',  tension: 0.3, pointRadius: 0, fill: true },
+                { label: 'Sortant',  data: data.map(d => d.net_out || 0), borderColor: '#e05252', backgroundColor: 'rgba(224,82,82,.08)',  tension: 0.3, pointRadius: 0, fill: true },
+            ]
+        },
+        options: lineOpts
+    });
+
+    new Chart(document.getElementById('disk-io-chart'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Lecture',  data: data.map(d => d.disk_read  || 0), borderColor: '#5b9bd5', backgroundColor: 'rgba(91,155,213,.08)',  tension: 0.3, pointRadius: 0, fill: true },
+                { label: 'Écriture', data: data.map(d => d.disk_write || 0), borderColor: '#d98c35', backgroundColor: 'rgba(217,140,53,.08)',  tension: 0.3, pointRadius: 0, fill: true },
+            ]
+        },
+        options: lineOpts
     });
 });
 </script>

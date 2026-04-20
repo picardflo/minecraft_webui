@@ -17,13 +17,23 @@ async def init_db() -> None:
         """)
         await db.execute("""
             CREATE TABLE IF NOT EXISTS metrics (
-                id        INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp DATETIME DEFAULT (datetime('now')),
-                cpu       REAL,
-                ram_pct   REAL,
-                players   INTEGER
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp  DATETIME DEFAULT (datetime('now')),
+                cpu        REAL,
+                ram_pct    REAL,
+                players    INTEGER,
+                disk_pct   REAL,
+                net_in     REAL,
+                net_out    REAL,
+                disk_read  REAL,
+                disk_write REAL
             )
         """)
+        for col in ("disk_pct", "net_in", "net_out", "disk_read", "disk_write"):
+            try:
+                await db.execute(f"ALTER TABLE metrics ADD COLUMN {col} REAL DEFAULT 0")
+            except Exception:
+                pass
         await db.execute("""
             CREATE TABLE IF NOT EXISTS kv (
                 key   TEXT PRIMARY KEY,
@@ -58,11 +68,14 @@ async def record_event(player: str, uuid: str | None, event_type: str) -> None:
         await db.commit()
 
 
-async def record_metrics(cpu: float, ram_pct: float, players: int) -> None:
+async def record_metrics(cpu: float, ram_pct: float, players: int,
+                         disk_pct: float = 0, net_in: float = 0, net_out: float = 0,
+                         disk_read: float = 0, disk_write: float = 0) -> None:
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute(
-            "INSERT INTO metrics (cpu, ram_pct, players) VALUES (?, ?, ?)",
-            (cpu, ram_pct, players),
+            "INSERT INTO metrics (cpu, ram_pct, players, disk_pct, net_in, net_out, disk_read, disk_write) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (cpu, ram_pct, players, disk_pct, net_in, net_out, disk_read, disk_write),
         )
         await db.commit()
 
@@ -86,8 +99,8 @@ async def get_metrics_history(hours: int = 24) -> list[dict]:
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute(
-            "SELECT timestamp, cpu, ram_pct, players FROM metrics "
-            "WHERE timestamp >= datetime('now', ?) ORDER BY timestamp ASC",
+            "SELECT timestamp, cpu, ram_pct, players, disk_pct, net_in, net_out, disk_read, disk_write "
+            "FROM metrics WHERE timestamp >= datetime('now', ?) ORDER BY timestamp ASC",
             (f"-{hours} hours",),
         ) as cur:
             return [dict(r) for r in await cur.fetchall()]

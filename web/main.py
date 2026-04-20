@@ -94,6 +94,11 @@ async def metrics_recorder() -> None:
                 metrics.get("cpu", 0),
                 metrics.get("ram_pct", 0),
                 status.get("players_online", 0),
+                metrics.get("disk_pct", 0),
+                metrics.get("net_in_kbs", 0),
+                metrics.get("net_out_kbs", 0),
+                metrics.get("disk_read_kbs", 0),
+                metrics.get("disk_write_kbs", 0),
             )
         except Exception as e:
             print(f"[metrics] {e}")

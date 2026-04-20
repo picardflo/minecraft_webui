@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     mc_port: int = 25565
     mc_log_path: str = "/logs/latest.log"
     host_proc: str | None = None
+    host_srv: str = "/host/srv"
     settings_path: str = "/data/settings.json"
     admin_password: str = "changeme"
     secret_key: str = "change-me"
