@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 
 import psutil
 
@@ -44,8 +45,13 @@ def get_system_metrics() -> dict:
     _prev_disk = disk_c
     _prev_ts   = now
 
-    # VM uptime
-    vm_uptime_s = int(time.time() - psutil.boot_time())
+    # VM uptime — lecture directe de /proc/uptime (fiable, pas de cache psutil)
+    try:
+        proc_root = settings.host_proc or "/proc"
+        uptime_s = float(Path(proc_root + "/uptime").read_text().split()[0])
+        vm_uptime_s = int(uptime_s)
+    except Exception:
+        vm_uptime_s = 0
 
     return {
         "cpu":           round(psutil.cpu_percent(interval=0.5), 1),
