@@ -55,12 +55,16 @@
 <p class="card-title">Ressources système</p>
 <div class="grid-3">
   <div class="card">
-    <div class="card-title">CPU</div>
+    <div class="card-title" style="display:flex;align-items:center;gap:6px">
+      <span class="material-icons-round" style="font-size:14px">memory</span> CPU
+    </div>
     <span id="cpu-val" class="stat-value {{ tc(metrics.cpu) }}">{{ metrics.cpu }}%</span>
     <div class="progress-track"><div id="cpu-bar" class="progress-bar {{ bar(metrics.cpu) }}" style="width:{{ metrics.cpu }}%"></div></div>
   </div>
   <div class="card">
-    <div class="card-title">RAM</div>
+    <div class="card-title" style="display:flex;align-items:center;gap:6px">
+      <span class="material-icons-round" style="font-size:14px">storage</span> RAM
+    </div>
     <div class="flex justify-between items-center">
       <span id="ram-val" class="stat-value {{ tc(metrics.ram_pct) }}">{{ metrics.ram_pct }}%</span>
       <span id="ram-extra" style="font-size:12px;color:var(--text-dim)">{{ metrics.ram_used_gb }} / {{ metrics.ram_total_gb }} Go</span>
@@ -68,7 +72,9 @@
     <div class="progress-track"><div id="ram-bar" class="progress-bar {{ bar(metrics.ram_pct) }}" style="width:{{ metrics.ram_pct }}%"></div></div>
   </div>
   <div class="card">
-    <div class="card-title">Swap</div>
+    <div class="card-title" style="display:flex;align-items:center;gap:6px">
+      <span class="material-icons-round" style="font-size:14px">swap_horiz</span> Swap
+    </div>
     <div class="flex justify-between items-center">
       <span id="swap-val" class="stat-value {{ tc(metrics.swap_pct) }}">{{ metrics.swap_pct }}%</span>
       <span id="swap-extra" style="font-size:12px;color:var(--text-dim)">{{ metrics.swap_used_gb }} / {{ metrics.swap_total_gb }} Go</span>
