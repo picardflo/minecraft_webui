@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     settings_path: str = "/data/settings.json"
     admin_password: str = "changeme"
     secret_key: str = "change-me"
+    metrics_interval: int = 60
 
     model_config = {"env_file": ".env"}
 

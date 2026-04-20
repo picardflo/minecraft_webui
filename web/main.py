@@ -75,7 +75,7 @@ async def metrics_recorder() -> None:
     first = True
     while True:
         if not first:
-            await asyncio.sleep(60)
+            await asyncio.sleep(settings.metrics_interval)
         first = False
         try:
             status, metrics = await asyncio.gather(

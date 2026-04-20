@@ -16,6 +16,7 @@ services:
       - SETTINGS_PATH=/data/settings.json
       - ADMIN_PASSWORD
       - SECRET_KEY
+      - METRICS_INTERVAL=${METRICS_INTERVAL:-60}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
