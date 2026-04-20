@@ -20,6 +20,110 @@ rcon.password=VotreMotDePasse</pre>
 </div>
 
 {% else %}
+
+<details style="margin-bottom:16px">
+  <summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--text-muted);user-select:none;list-style:none;display:flex;align-items:center;gap:6px">
+    <span class="material-icons-round" style="font-size:16px">menu_book</span>
+    Mémo commandes courantes
+    <span class="material-icons-round" style="font-size:14px;margin-left:auto" id="chev">expand_more</span>
+  </summary>
+  <div class="card" style="margin-top:10px;padding:18px 20px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0">
+
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">say &lt;message&gt;</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Message global en chat</span>
+      </div>
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">list</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Joueurs connectés</span>
+      </div>
+
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">op &lt;joueur&gt;</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Passer opérateur</span>
+      </div>
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">deop &lt;joueur&gt;</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Retirer opérateur</span>
+      </div>
+
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">kick &lt;joueur&gt; [raison]</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Expulser du serveur</span>
+      </div>
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">ban &lt;joueur&gt; [raison]</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Bannir définitivement</span>
+      </div>
+
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">pardon &lt;joueur&gt;</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Débannir un joueur</span>
+      </div>
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">ban-ip &lt;joueur|ip&gt;</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Bannir par IP</span>
+      </div>
+
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">tp &lt;joueur&gt; &lt;dest&gt;</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Téléporter vers joueur/coords</span>
+      </div>
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">give &lt;joueur&gt; &lt;item&gt; [qté]</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Donner un objet</span>
+      </div>
+
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">gamemode &lt;mode&gt; &lt;joueur&gt;</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">survival / creative / adventure / spectator</span>
+      </div>
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">effect &lt;joueur&gt; clear</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Supprimer tous les effets</span>
+      </div>
+
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">time set day|night</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Changer l'heure</span>
+      </div>
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">weather clear|rain|thunder</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Changer la météo</span>
+      </div>
+
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">difficulty &lt;0-3&gt;</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">0 pacifique → 3 difficile</span>
+      </div>
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">gamerule &lt;règle&gt; &lt;valeur&gt;</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Ex : keepInventory true</span>
+      </div>
+
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">whitelist add &lt;joueur&gt;</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Ajouter à la whitelist</span>
+      </div>
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">whitelist remove &lt;joueur&gt;</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Retirer de la whitelist</span>
+      </div>
+
+      <div style="padding:8px 0;border-bottom:1px solid var(--outline-var)">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">save-all</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Forcer la sauvegarde monde</span>
+      </div>
+      <div style="padding:8px 0">
+        <span style="font-family:monospace;font-size:12px;color:var(--primary)">stop</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Arrêter proprement le serveur</span>
+      </div>
+
+    </div>
+  </div>
+</details>
+
 <div class="card">
   <div id="output" class="log-viewer" style="height:440px;margin-bottom:14px">
     <div class="l-default">Console prête. Tapez une commande et appuyez sur Entrée.</div>
@@ -34,6 +138,10 @@ rcon.password=VotreMotDePasse</pre>
 </div>
 
 <script>
+document.querySelector('details').addEventListener('toggle', e => {
+    document.getElementById('chev').textContent = e.target.open ? 'expand_less' : 'expand_more';
+});
+
 const output = document.getElementById('output');
 const form   = document.getElementById('rcon-form');
 const input  = document.getElementById('cmd');
