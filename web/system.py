@@ -45,16 +45,11 @@ def get_system_metrics() -> dict:
     _prev_disk = disk_c
     _prev_ts   = now
 
-    # VM uptime — btime from /proc/stat is an absolute Unix timestamp,
-    # unlike /proc/uptime which is namespace-relative inside Docker.
+    # /host/proc/uptime contient l'uptime réel du host (monotonique, non affecté
+    # par les migrations VM ni NTP, contrairement à btime dans /proc/stat).
     try:
         proc_root = settings.host_proc or "/proc"
-        vm_uptime_s = 0
-        for line in Path(proc_root + "/stat").read_text().splitlines():
-            if line.startswith("btime"):
-                boot_ts = int(line.split()[1])
-                vm_uptime_s = int(time.time() - boot_ts)
-                break
+        vm_uptime_s = int(float(Path(proc_root + "/uptime").read_text().split()[0]))
     except Exception:
         vm_uptime_s = 0
 
