@@ -61,11 +61,16 @@
     </div>
 
     <div class="card mb-6">
-      <p class="card-title">Notifieur Discord</p>
+      <p class="card-title">Discord</p>
       <div class="field">
-        <label>URL Webhook Discord</label>
+        <label>Lien d'invitation du serveur Discord</label>
+        <input type="url" name="discord_server_url" value="{{ cfg.discord_server_url }}" placeholder="https://discord.gg/...">
+        <span class="hint">Affiché comme bouton sur le dashboard. Laissez vide pour masquer.</span>
+      </div>
+      <div class="field">
+        <label>URL Webhook (notifications)</label>
         <input type="url" name="webhook_url" value="{{ cfg.webhook_url }}" placeholder="https://discord.com/api/webhooks/...">
-        <span class="hint">Laissez vide pour désactiver les notifications.</span>
+        <span class="hint">Laissez vide pour désactiver les notifications de connexion.</span>
       </div>
       <div class="field" style="margin-bottom:0">
         <label>Délai de polling (secondes)</label>

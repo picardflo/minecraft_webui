@@ -11,6 +11,7 @@ _defaults: dict = {
     "rcon_password": "",
     "banner_mime": "",
     "favicon_mime": "",
+    "discord_server_url": "",
 }
 
 

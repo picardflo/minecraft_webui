@@ -185,6 +185,7 @@ async def dashboard(request: Request):
     return templates.TemplateResponse("index.html", {
         "request": request, "status": status, "metrics": metrics,
         "has_banner": (MEDIA_PATH / "server_banner").exists(),
+        "discord_url": read_settings().get("discord_server_url", ""),
     })
 
 
@@ -366,6 +367,7 @@ async def admin_vacuum(request: Request):
 @app.post("/settings")
 async def settings_save(
     request: Request,
+    discord_server_url: str = Form(""),
     webhook_url: str = Form(""),
     poll_delay: int = Form(60),
     rcon_host: str = Form(""),
@@ -380,6 +382,7 @@ async def settings_save(
         return RedirectResponse("/login", status_code=302)
 
     cfg_update: dict = {
+        "discord_server_url": discord_server_url.strip(),
         "webhook_url": webhook_url.strip(),
         "poll_delay": max(10, poll_delay),
         "rcon_host": rcon_host.strip() or settings.mc_host,

@@ -2,7 +2,7 @@
 
 Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications Discord et console RCON.
 
-![Version](https://img.shields.io/badge/version-1.6.2-green)
+![Version](https://img.shields.io/badge/version-1.7.0-green)
 ![Docker](https://img.shields.io/badge/docker-compose-blue)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 
@@ -125,6 +125,9 @@ git pull && docker compose up -d --build web
 ```
 
 ## Changelog
+
+### v1.7.0
+- **Feat** : bouton Discord sur le dashboard — logo SVG officiel blurple, lien configurable dans `/settings`, visible uniquement si renseigné
 
 ### v1.6.2
 - **Fix** : stats temps de jeu — session en cours comptabilisée (join sans leave)
