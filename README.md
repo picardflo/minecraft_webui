@@ -5,12 +5,13 @@ Dashboard de monitoring pour serveur Minecraft Java, avec notifications Discord 
 ## Fonctionnalités
 
 - **Dashboard** — statut serveur, latence, joueurs en ligne, ressources système (CPU/RAM/Swap) en temps réel via SSE
-- **Joueurs** — liste des connectés avec skins Minecraft, mise à jour automatique
+- **Joueurs** — liste des connectés avec skins Minecraft, mise à jour automatique ; clic sur un joueur → modal avec UUID, type de skin, cape ; boutons **Kick / Ban** pour les admins (RCON)
 - **Historique** — journal des connexions/déconnexions persisté en SQLite (filtres 24h / 7j / 30j)
 - **Journaux** — 100 dernières lignes du log serveur avec coloration par niveau
 - **Notifications Discord** — embed avec skin du joueur envoyé à chaque connexion/déconnexion
-- **Console RCON** — terminal interactif pour envoyer des commandes au serveur (admin)
+- **Console RCON** — terminal interactif avec mémo des commandes courantes (admin)
 - **Config UI** — webhook Discord et paramètres RCON modifiables depuis l'interface, protégés par mot de passe
+- **Versioning** — version affichée dans le footer (fichier `web/VERSION`)
 
 ## Stack
 
