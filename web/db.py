@@ -175,6 +175,15 @@ async def get_player_stats() -> list[dict]:
             except Exception:
                 pass
 
+    # Sessions en cours (join sans leave) : ajouter le temps depuis la connexion
+    now = datetime.utcnow()
+    for name, join_ts in pending_join.items():
+        try:
+            j = datetime.fromisoformat(join_ts)
+            players[name]["total_seconds"] += int((now - j).total_seconds())
+        except Exception:
+            pass
+
     return sorted(players.values(), key=lambda x: x["total_seconds"], reverse=True)
 
 
