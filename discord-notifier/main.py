@@ -6,12 +6,13 @@ from typing import Optional
 
 import aiohttp
 from mcstatus import JavaServer
+from mcstatus.status_response import JavaStatusPlayer
 
 MC_HOST = os.environ["MC_HOST"]
 MC_PORT = int(os.getenv("MC_PORT", "25565"))
 SETTINGS_PATH = Path(os.getenv("SETTINGS_PATH", "/data/settings.json"))
 
-previous_players: set[str] = set()
+previous_players: dict[str, str] = {}  # name -> uuid
 
 
 def load_settings() -> dict:
@@ -21,25 +22,12 @@ def load_settings() -> dict:
         return {"webhook_url": "", "poll_delay": 60}
 
 
-async def get_online_players() -> set[str]:
+async def get_online_players() -> dict[str, str]:
     try:
-        query = await JavaServer(MC_HOST, MC_PORT).async_query()
-        return set(query.players.names or [])
+        s = await JavaServer(MC_HOST, MC_PORT).async_status()
+        return {p.name: p.id for p in (s.players.sample or [])}
     except Exception:
-        return set()
-
-
-async def fetch_uuid(session: aiohttp.ClientSession, username: str) -> Optional[str]:
-    try:
-        async with session.get(
-            f"https://api.mojang.com/users/profiles/minecraft/{username}",
-            timeout=aiohttp.ClientTimeout(total=5),
-        ) as resp:
-            if resp.status == 200:
-                return (await resp.json()).get("id")
-    except Exception:
-        pass
-    return None
+        return {}
 
 
 async def send_notification(
@@ -77,15 +65,14 @@ async def main() -> None:
             poll_delay: int = max(10, cfg.get("poll_delay", 60))
 
             current_players = await get_online_players()
-            joined = current_players - previous_players
-            left   = previous_players - current_players
+            joined = {n: u for n, u in current_players.items() if n not in previous_players}
+            left   = {n: u for n, u in previous_players.items() if n not in current_players}
 
             if webhook_url:
-                for player in joined | left:
-                    uuid = await fetch_uuid(session, player)
+                for name, uuid in {**joined, **left}.items():
                     await send_notification(
-                        session, webhook_url, player, uuid,
-                        player in joined, len(current_players),
+                        session, webhook_url, name, uuid,
+                        name in joined, len(current_players),
                     )
 
             previous_players = current_players
