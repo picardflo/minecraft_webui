@@ -2,7 +2,7 @@
 
 Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications Discord et console RCON.
 
-![Version](https://img.shields.io/badge/version-1.5.0-green)
+![Version](https://img.shields.io/badge/version-1.5.1-green)
 ![Docker](https://img.shields.io/badge/docker-compose-blue)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 
@@ -123,6 +123,34 @@ Les ressources CPU/RAM sont lues depuis `/proc` de la machine hôte (bind-mount)
 ```bash
 git pull && docker compose up -d --build web
 ```
+
+## Changelog
+
+### v1.5.1
+- **Fix** : uptime machine affiché dans Ressources système — algorithme générique `CLOCK_BOOTTIME − starttime(PID 1)`, fiable sur LXC Proxmox, VM KVM et bare-metal
+- **Fix** : charts Réseau I/O et Disque I/O toujours plats — race condition entre le flux SSE (fenêtre 5 s) et le recorder (fenêtre 5 min) sur les globals `_prev_*` ; chaque appelant dispose désormais de son propre état
+
+### v1.5.0
+- Métriques système étendues : disque, réseau KB/s, disque I/O KB/s, uptime VM
+- Nouveaux charts 24 h : CPU/RAM/Disque %, Réseau I/O, Disque I/O
+- `SRV_PATH` configurable dans `.env` pour le monitoring disque
+
+### v1.4.0
+- Thème dark / light persisté (localStorage) avec bascule dans la nav
+- Bannière serveur et favicon personnalisables depuis l'interface (upload admin)
+- Uptime serveur Minecraft affiché dans la carte statut (lu depuis `latest.log` + SQLite)
+
+### v1.3.0
+- Page Statistiques : temps de jeu par joueur, heures de pointe, historique graphique (Chart.js)
+
+### v1.2.0
+- Modal joueur : UUID, type de skin (Steve/Alex), cape — données Mojang proxiées côté serveur
+- Kick / Ban depuis l'interface (admin, RCON)
+
+### v1.1.0
+- Mémo des commandes courantes dans la console RCON
+- Remplacement de `mcrcon` par une implémentation RCON async native (fix `signal only works in main thread`)
+- Versioning applicatif (`web/VERSION` affiché dans le footer)
 
 ## Roadmap
 
