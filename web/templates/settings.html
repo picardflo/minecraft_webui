@@ -92,4 +92,81 @@
   </div>
 
 </form>
+
+{% if maintenance %}
+<div class="alert alert-success" style="max-width:560px;margin-top:16px">
+  <span class="material-icons-round">check_circle</span>
+  {% if maintenance.startswith('events_ok') %}Historique purgé.
+  {% elif maintenance.startswith('metrics_ok') %}Métriques purgées.
+  {% elif maintenance == 'vacuum_ok' %}Base de données compactée.
+  {% endif %}
+</div>
+{% endif %}
+
+<div style="max-width:560px;margin-top:8px">
+  <div class="card">
+    <p class="card-title" style="display:flex;align-items:center;gap:6px">
+      <span class="material-icons-round" style="font-size:16px">build</span> Maintenance base de données
+    </p>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:20px">
+      Taille actuelle : <strong style="color:var(--text-dim)">{{ db_size_kb }} Ko</strong>
+    </p>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+
+      <div style="padding:14px;background:var(--surface-var);border-radius:var(--radius-sm)">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">
+          <span class="material-icons-round" style="font-size:14px;vertical-align:middle">history</span>
+          Historique connexions
+        </div>
+        <form method="post" action="/admin/db/purge-events" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <select name="days" style="background:var(--surface-high);border:1px solid var(--outline-var);border-radius:var(--radius-sm);color:var(--text);padding:6px 10px;font-size:13px;font-family:inherit">
+            <option value="30">Supprimer > 30 jours</option>
+            <option value="90">Supprimer > 90 jours</option>
+            <option value="0">Tout supprimer</option>
+          </select>
+          <button type="submit" class="btn btn-outline" style="color:var(--error);border-color:var(--error)"
+            onclick="return confirm('Supprimer ces entrées d\'historique ?')">
+            <span class="material-icons-round">delete_sweep</span> Purger
+          </button>
+        </form>
+      </div>
+
+      <div style="padding:14px;background:var(--surface-var);border-radius:var(--radius-sm)">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">
+          <span class="material-icons-round" style="font-size:14px;vertical-align:middle">bar_chart</span>
+          Métriques système (charts)
+        </div>
+        <form method="post" action="/admin/db/purge-metrics" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <select name="days" style="background:var(--surface-high);border:1px solid var(--outline-var);border-radius:var(--radius-sm);color:var(--text);padding:6px 10px;font-size:13px;font-family:inherit">
+            <option value="30">Supprimer > 30 jours</option>
+            <option value="90">Supprimer > 90 jours</option>
+            <option value="0">Tout supprimer</option>
+          </select>
+          <button type="submit" class="btn btn-outline" style="color:var(--error);border-color:var(--error)"
+            onclick="return confirm('Supprimer ces métriques ?')">
+            <span class="material-icons-round">delete_sweep</span> Purger
+          </button>
+        </form>
+      </div>
+
+      <div style="padding:14px;background:var(--surface-var);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">
+            <span class="material-icons-round" style="font-size:14px;vertical-align:middle">compress</span>
+            Compacter la base (VACUUM)
+          </div>
+          <div style="font-size:12px;color:var(--text-muted)">Récupère l'espace disque après une purge.</div>
+        </div>
+        <form method="post" action="/admin/db/vacuum">
+          <button type="submit" class="btn btn-outline"
+            onclick="return confirm('Lancer le VACUUM ? L\'opération peut prendre quelques secondes.')">
+            <span class="material-icons-round">compress</span> VACUUM
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
 {% endblock %}

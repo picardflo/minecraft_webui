@@ -324,7 +324,7 @@ async def logout():
 # ── Pages admin ───────────────────────────────────────────────────────────────
 
 @app.get("/settings", response_class=HTMLResponse)
-async def settings_page(request: Request, saved: bool = False):
+async def settings_page(request: Request, saved: bool = False, maintenance: str = ""):
     if not is_authenticated(request):
         return RedirectResponse("/login", status_code=302)
     return templates.TemplateResponse("settings.html", {
@@ -332,7 +332,33 @@ async def settings_page(request: Request, saved: bool = False):
         "saved": saved, "mc_host": settings.mc_host,
         "has_banner": (MEDIA_PATH / "server_banner").exists(),
         "has_favicon": (MEDIA_PATH / "favicon").exists(),
+        "db_size_kb": await db.db_size_kb(),
+        "maintenance": maintenance,
     })
+
+
+@app.post("/admin/db/purge-events")
+async def admin_purge_events(request: Request, days: int = Form(0)):
+    if not is_authenticated(request):
+        return JSONResponse({"error": "Non authentifié"}, status_code=401)
+    n = await db.purge_events(days if days > 0 else None)
+    return RedirectResponse(f"/settings?maintenance=events_ok&n={n}", status_code=302)
+
+
+@app.post("/admin/db/purge-metrics")
+async def admin_purge_metrics(request: Request, days: int = Form(0)):
+    if not is_authenticated(request):
+        return JSONResponse({"error": "Non authentifié"}, status_code=401)
+    n = await db.purge_metrics(days if days > 0 else None)
+    return RedirectResponse(f"/settings?maintenance=metrics_ok&n={n}", status_code=302)
+
+
+@app.post("/admin/db/vacuum")
+async def admin_vacuum(request: Request):
+    if not is_authenticated(request):
+        return JSONResponse({"error": "Non authentifié"}, status_code=401)
+    await db.vacuum_db()
+    return RedirectResponse("/settings?maintenance=vacuum_ok", status_code=302)
 
 
 @app.post("/settings")

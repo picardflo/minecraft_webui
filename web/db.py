@@ -112,6 +112,42 @@ async def get_metrics_history(hours: int = 24) -> list[dict]:
     return rows[::every_n]
 
 
+async def purge_events(days: int | None = None) -> int:
+    async with aiosqlite.connect(DB_PATH) as db:
+        if days:
+            cur = await db.execute(
+                "DELETE FROM events WHERE timestamp < datetime('now', ?)", (f"-{days} days",)
+            )
+        else:
+            cur = await db.execute("DELETE FROM events")
+        await db.commit()
+        return cur.rowcount
+
+
+async def purge_metrics(days: int | None = None) -> int:
+    async with aiosqlite.connect(DB_PATH) as db:
+        if days:
+            cur = await db.execute(
+                "DELETE FROM metrics WHERE timestamp < datetime('now', ?)", (f"-{days} days",)
+            )
+        else:
+            cur = await db.execute("DELETE FROM metrics")
+        await db.commit()
+        return cur.rowcount
+
+
+async def vacuum_db() -> None:
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("VACUUM")
+
+
+async def db_size_kb() -> int:
+    try:
+        return DB_PATH.stat().st_size // 1024
+    except Exception:
+        return 0
+
+
 async def get_player_stats() -> list[dict]:
     from datetime import datetime
     async with aiosqlite.connect(DB_PATH) as db:
