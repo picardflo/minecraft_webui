@@ -46,9 +46,10 @@ def get_system_metrics() -> dict:
     _prev_disk = disk_c
     _prev_ts   = now
 
-    # CLOCK_BOOTTIME = uptime du host Proxmox (bypass namespaces).
-    # PID 1 de /host/proc = init du LXC ; son starttime (jiffies depuis boot Proxmox)
-    # soustrait à CLOCK_BOOTTIME donne l'uptime réel du LXC.
+    # Générique : CLOCK_BOOTTIME bypasse les namespaces → uptime de la couche physique.
+    # PID 1 de /host/proc = init de la couche hôte directe (LXC, VM, bare-metal).
+    # starttime (jiffies depuis le boot physique) soustrait à CLOCK_BOOTTIME
+    # donne l'uptime de cet hôte quel que soit l'environnement.
     try:
         proxmox_uptime = time.clock_gettime(time.CLOCK_BOOTTIME)
         proc_root = settings.host_proc or "/proc"
