@@ -2,6 +2,7 @@ import asyncio
 import base64
 import json
 import mimetypes
+import re
 import urllib.request
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -25,10 +26,34 @@ _live_players: dict[str, str] = {}
 _server_online_since: str | None = None
 
 
+def _server_start_from_log() -> str | None:
+    log_path = Path("/logs/latest.log")
+    if not log_path.exists():
+        return None
+    try:
+        with open(log_path, errors="replace") as f:
+            for line in f:
+                m = re.match(r'\[(\d{2}:\d{2}:\d{2})\]', line.strip())
+                if m:
+                    log_date = datetime.fromtimestamp(
+                        log_path.stat().st_ctime, tz=timezone.utc
+                    ).date()
+                    t = datetime.strptime(m.group(1), "%H:%M:%S").time()
+                    return datetime.combine(log_date, t, tzinfo=timezone.utc).isoformat()
+    except Exception:
+        return None
+    return None
+
+
 async def player_tracker() -> None:
     global _live_players, _server_online_since
     await db.init_db()
     _server_online_since = await db.kv_get("server_online_since")
+    if _server_online_since is None:
+        from_log = _server_start_from_log()
+        if from_log:
+            _server_online_since = from_log
+            await db.kv_set("server_online_since", from_log)
     while True:
         try:
             current = {p["name"]: p["uuid"] for p in await get_players()}
@@ -59,7 +84,7 @@ async def metrics_recorder() -> None:
             )
             is_online = status.get("online", False)
             if is_online and not was_online:
-                _server_online_since = datetime.now(timezone.utc).isoformat()
+                _server_online_since = _server_start_from_log() or datetime.now(timezone.utc).isoformat()
                 await db.kv_set("server_online_since", _server_online_since)
             elif not is_online and was_online:
                 _server_online_since = None
