@@ -96,6 +96,11 @@ async def get_events(limit: int = 200, days: int | None = None) -> list[dict]:
 
 
 async def get_metrics_history(hours: int = 24) -> list[dict]:
+    # Sous-échantillonnage : max ~288 points quelle que soit la fenêtre.
+    # every_n = 1 garde tout si peu de points, sinon on prend 1 ligne sur N.
+    target = 288
+    interval_minutes = hours * 60
+    every_n = max(1, interval_minutes // target)
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute(
@@ -103,7 +108,8 @@ async def get_metrics_history(hours: int = 24) -> list[dict]:
             "FROM metrics WHERE timestamp >= datetime('now', ?) ORDER BY timestamp ASC",
             (f"-{hours} hours",),
         ) as cur:
-            return [dict(r) for r in await cur.fetchall()]
+            rows = [dict(r) for r in await cur.fetchall()]
+    return rows[::every_n]
 
 
 async def get_player_stats() -> list[dict]:
