@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Joueurs{% endblock %}
+{% block content %}
+<meta http-equiv="refresh" content="30">
+
+<div class="page-header">
+  <h1><span class="material-icons-round">group</span> Joueurs en ligne</h1>
+  <span class="sub">{{ players | length }} joueur(s) • actualisation 30s</span>
+</div>
+
+{% if players %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:16px">
+  {% for p in players %}
+  <div class="player-card">
+    {% if p.uuid %}
+    <img src="https://mc-heads.net/avatar/{{ p.uuid }}/64.png" alt="{{ p.name }}" width="64" height="64">
+    {% else %}
+    <div style="width:64px;height:64px;background:var(--surface-high);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:28px">?</div>
+    {% endif %}
+    <span class="player-name">{{ p.name }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:64px 24px">
+  <span class="material-icons-round" style="font-size:48px;color:var(--text-dim)">person_off</span>
+  <p style="color:var(--text-dim);margin-top:14px;font-size:15px">Aucun joueur en ligne</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<meta http-equiv="refresh" content="30">
+
+{% macro bar(pct) %}{% if pct < 50 %}bar-green{% elif pct < 80 %}bar-yellow{% else %}bar-red{% endif %}{% endmacro %}
+{% macro tc(pct) %}{% if pct < 50 %}c-green{% elif pct < 80 %}c-yellow{% else %}c-red{% endif %}{% endmacro %}
+{% macro pc(ms) %}{% if ms < 100 %}c-green{% elif ms < 200 %}c-yellow{% else %}c-red{% endif %}{% endmacro %}
+
+<!-- Serveur status -->
+<div class="card mb-6">
+  <div class="flex items-center gap-2 mb-4" style="gap:12px">
+    <span class="dot {% if status.online %}dot-green{% else %}dot-red{% endif %}"></span>
+    <span style="font-size:16px;font-weight:500">Serveur Minecraft</span>
+    {% if status.online %}
+      <span class="chip chip-green" style="margin-left:auto"><span class="material-icons-round">circle</span> En ligne</span>
+    {% else %}
+      <span class="chip chip-red"   style="margin-left:auto"><span class="material-icons-round">cancel</span> Hors ligne</span>
+    {% endif %}
+  </div>
+
+  {% if status.online %}
+  <div class="grid-4">
+    <div>
+      <div class="stat-label">Version</div>
+      <div class="stat-value" style="font-size:14px">{{ status.version }}</div>
+    </div>
+    <div>
+      <div class="stat-label">Latence</div>
+      <div class="stat-value {{ pc(status.latency) }}">{{ status.latency }} ms</div>
+    </div>
+    <div>
+      <div class="stat-label">Joueurs</div>
+      <div class="stat-value">
+        <span class="c-green">{{ status.players_online }}</span>
+        <span style="color:var(--text-dim);font-size:14px"> / {{ status.players_max }}</span>
+      </div>
+    </div>
+    <div>
+      <div class="stat-label">MOTD</div>
+      <div class="stat-value" style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ status.motd }}</div>
+    </div>
+  </div>
+  {% else %}
+  <p style="color:var(--error);font-size:14px">Serveur inaccessible — vérifiez que le service est démarré.</p>
+  {% endif %}
+</div>
+
+<!-- Ressources système -->
+<p class="card-title">Ressources système</p>
+<div class="grid-3">
+
+  <div class="card">
+    <div class="card-title">CPU</div>
+    <div class="flex justify-between items-center">
+      <span class="stat-value {{ tc(metrics.cpu) }}">{{ metrics.cpu }}%</span>
+    </div>
+    <div class="progress-track"><div class="progress-bar {{ bar(metrics.cpu) }}" style="width:{{ metrics.cpu }}%"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">RAM</div>
+    <div class="flex justify-between items-center">
+      <span class="stat-value {{ tc(metrics.ram_pct) }}">{{ metrics.ram_pct }}%</span>
+      <span style="font-size:12px;color:var(--text-dim)">{{ metrics.ram_used_gb }} / {{ metrics.ram_total_gb }} Go</span>
+    </div>
+    <div class="progress-track"><div class="progress-bar {{ bar(metrics.ram_pct) }}" style="width:{{ metrics.ram_pct }}%"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Swap</div>
+    <div class="flex justify-between items-center">
+      <span class="stat-value {{ tc(metrics.swap_pct) }}">{{ metrics.swap_pct }}%</span>
+      <span style="font-size:12px;color:var(--text-dim)">{{ metrics.swap_used_gb }} / {{ metrics.swap_total_gb }} Go</span>
+    </div>
+    <div class="progress-track"><div class="progress-bar {{ bar(metrics.swap_pct) }}" style="width:{{ metrics.swap_pct }}%"></div></div>
+  </div>
+
+</div>
+{% endblock %}

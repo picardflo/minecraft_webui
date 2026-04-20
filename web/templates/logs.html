@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Journaux{% endblock %}
+{% block content %}
+<meta http-equiv="refresh" content="10">
+
+<div class="page-header">
+  <h1><span class="material-icons-round">terminal</span> Journaux serveur</h1>
+  <span class="sub">100 dernières lignes • actualisation 10s</span>
+</div>
+
+<div class="log-viewer" id="log">
+{% for line in lines %}
+<div class="{% if 'WARN' in line %}l-warn{% elif 'ERROR' in line or 'FATAL' in line %}l-error{% elif 'INFO' in line %}l-info{% else %}l-default{% endif %}">{{ line }}</div>
+{% endfor %}
+</div>
+
+<script>
+  document.getElementById('log').scrollTop = 99999;
+</script>
+{% endblock %}

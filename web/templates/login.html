@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Connexion{% endblock %}
+{% block content %}
+
+<div style="max-width:380px;margin:80px auto">
+  <div class="card">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-family:'Press Start 2P',monospace;font-size:11px;color:var(--primary);margin-bottom:12px">⛏ Config</div>
+      <p style="color:var(--text-dim);font-size:14px">Accès administrateur requis</p>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error">
+      <span class="material-icons-round">error_outline</span> Mot de passe incorrect.
+    </div>
+    {% endif %}
+
+    <form method="post" action="/login">
+      <div class="field">
+        <label>Mot de passe</label>
+        <input type="password" name="password" autofocus placeholder="••••••••">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">
+        <span class="material-icons-round">lock_open</span> Connexion
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

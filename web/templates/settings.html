@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Configuration{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1><span class="material-icons-round">settings</span> Configuration</h1>
+</div>
+
+{% if saved %}
+<div class="alert alert-success">
+  <span class="material-icons-round">check_circle</span>
+  Configuration sauvegardée.
+</div>
+{% endif %}
+
+<div class="card" style="max-width:560px">
+  <p class="card-title">Notifieur Discord</p>
+  <form method="post" action="/settings">
+    <div class="field">
+      <label>URL Webhook Discord</label>
+      <input type="url" name="webhook_url" value="{{ cfg.webhook_url }}"
+             placeholder="https://discord.com/api/webhooks/...">
+      <span class="hint">Laissez vide pour désactiver les notifications.</span>
+    </div>
+    <div class="field">
+      <label>Délai de polling (secondes)</label>
+      <input type="number" name="poll_delay" value="{{ cfg.poll_delay }}" min="10" max="300">
+      <span class="hint">Intervalle entre deux vérifications (min 10s).</span>
+    </div>
+    <button type="submit" class="btn btn-primary">
+      <span class="material-icons-round">save</span> Sauvegarder
+    </button>
+  </form>
+</div>
+
+<div style="margin-top:24px">
+  <a href="/logout" class="btn btn-outline">
+    <span class="material-icons-round">logout</span> Déconnexion
+  </a>
+</div>
+{% endblock %}

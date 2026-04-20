@@ -1,0 +1,48 @@
+services:
+
+  web:
+    build: ./web
+    restart: unless-stopped
+    volumes:
+      - ${MC_LOG_PATH:-/srv/minecraft/server/logs/latest.log}:/logs/latest.log:ro
+      - /proc:/host/proc:ro
+      - app_data:/data
+    environment:
+      - MC_HOST
+      - MC_PORT
+      - HOST_PROC=/host/proc
+      - SETTINGS_PATH=/data/settings.json
+      - ADMIN_PASSWORD
+      - SECRET_KEY
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - caddy
+
+  discord-notifier:
+    build: ./discord-notifier
+    restart: unless-stopped
+    volumes:
+      - app_data:/data
+    environment:
+      - MC_HOST
+      - MC_PORT
+      - SETTINGS_PATH=/data/settings.json
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${CERT_DIR:-/etc/ssl/home.lan}:/certs:ro
+      - caddy_data:/data
+
+volumes:
+  app_data:
+  caddy_data:
