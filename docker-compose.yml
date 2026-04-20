@@ -39,7 +39,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ${CADDYFILE:-Caddyfile}:/etc/caddy/Caddyfile:ro
+      - ./${CADDYFILE:-Caddyfile}:/etc/caddy/Caddyfile:ro
       - ./certs:/certs:ro
       - caddy_data:/data
     environment:
