@@ -121,11 +121,3 @@ Les ressources CPU/RAM sont lues depuis `/proc` de la machine hôte (bind-mount)
 git pull && docker compose up -d --build web
 ```
 
-## Migration depuis des services systemd
-
-Une fois la stack Docker opérationnelle :
-
-```bash
-systemctl stop players webstatus
-systemctl disable players webstatus
-```
