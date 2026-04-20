@@ -2,7 +2,7 @@
 
 Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications Discord et console RCON.
 
-![Version](https://img.shields.io/badge/version-1.6.1-green)
+![Version](https://img.shields.io/badge/version-1.6.2-green)
 ![Docker](https://img.shields.io/badge/docker-compose-blue)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 
@@ -125,6 +125,10 @@ git pull && docker compose up -d --build web
 ```
 
 ## Changelog
+
+### v1.6.2
+- **Fix** : stats temps de jeu — session en cours comptabilisée (join sans leave)
+- **Fix** : purge historique réinitialise `_live_players` → re-log automatique des joueurs connectés en < 30s
 
 ### v1.6.1
 - **UI** : bouton Déconnexion dans la navbar (visible uniquement quand connecté en admin)
