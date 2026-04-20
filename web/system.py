@@ -1,3 +1,4 @@
+import os
 import time
 from pathlib import Path
 
@@ -45,10 +46,21 @@ def get_system_metrics() -> dict:
     _prev_disk = disk_c
     _prev_ts   = now
 
-    # CLOCK_BOOTTIME est un syscall kernel direct, non affecté par le namespace
-    # de montage procfs que Docker crée (contrairement à /proc/uptime).
+    # CLOCK_BOOTTIME = uptime du host Proxmox (bypass namespaces).
+    # PID 1 de /host/proc = init du LXC ; son starttime (jiffies depuis boot Proxmox)
+    # soustrait à CLOCK_BOOTTIME donne l'uptime réel du LXC.
     try:
-        vm_uptime_s = int(time.clock_gettime(time.CLOCK_BOOTTIME))
+        proxmox_uptime = time.clock_gettime(time.CLOCK_BOOTTIME)
+        proc_root = settings.host_proc or "/proc"
+        stat_text = Path(proc_root + "/1/stat").read_text()
+        # starttime = champ 22 ; parse après la comm "(…)" qui peut contenir des espaces
+        after_comm = stat_text[stat_text.rfind(")") + 2:]
+        starttime_ticks = int(after_comm.split()[19])  # champ 22 → index 19 après comm
+        try:
+            clk_tck = os.sysconf("SC_CLK_TCK")
+        except Exception:
+            clk_tck = 100
+        vm_uptime_s = max(0, int(proxmox_uptime - starttime_ticks / clk_tck))
     except Exception:
         vm_uptime_s = 0
 
