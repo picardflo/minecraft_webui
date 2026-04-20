@@ -6,7 +6,7 @@ services:
     volumes:
       - ${MC_LOG_PATH:-/srv/minecraft/server/logs/latest.log}:/logs/latest.log:ro
       - /proc:/host/proc:ro
-      - /srv:/host/srv:ro
+      - ${SRV_PATH:-/srv}:/host/srv:ro
       - app_data:/data
     environment:
       - MC_HOST
