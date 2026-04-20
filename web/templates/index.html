@@ -1,80 +1,103 @@
 {% extends "base.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
-<meta http-equiv="refresh" content="30">
 
-{% macro bar(pct) %}{% if pct < 50 %}bar-green{% elif pct < 80 %}bar-yellow{% else %}bar-red{% endif %}{% endmacro %}
-{% macro tc(pct) %}{% if pct < 50 %}c-green{% elif pct < 80 %}c-yellow{% else %}c-red{% endif %}{% endmacro %}
+{% macro bar(p) %}{% if p < 50 %}bar-green{% elif p < 80 %}bar-yellow{% else %}bar-red{% endif %}{% endmacro %}
+{% macro tc(p)  %}{% if p < 50 %}c-green{% elif p < 80 %}c-yellow{% else %}c-red{% endif %}{% endmacro %}
 {% macro pc(ms) %}{% if ms < 100 %}c-green{% elif ms < 200 %}c-yellow{% else %}c-red{% endif %}{% endmacro %}
 
-<!-- Serveur status -->
 <div class="card mb-6">
-  <div class="flex items-center gap-2 mb-4" style="gap:12px">
-    <span class="dot {% if status.online %}dot-green{% else %}dot-red{% endif %}"></span>
-    <span style="font-size:16px;font-weight:500">Serveur Minecraft</span>
-    {% if status.online %}
-      <span class="chip chip-green" style="margin-left:auto"><span class="material-icons-round">circle</span> En ligne</span>
-    {% else %}
-      <span class="chip chip-red"   style="margin-left:auto"><span class="material-icons-round">cancel</span> Hors ligne</span>
-    {% endif %}
+  <div class="flex items-center mb-4" style="gap:12px">
+    <span id="dot" class="dot {% if status.online %}dot-green{% else %}dot-red{% endif %}"></span>
+    <span style="font-size:16px;font-weight:700">Serveur Minecraft</span>
+    <span id="chip" class="chip {% if status.online %}chip-green{% else %}chip-red{% endif %}" style="margin-left:auto">
+      <span class="material-icons-round">{% if status.online %}circle{% else %}cancel{% endif %}</span>
+      {% if status.online %}En ligne{% else %}Hors ligne{% endif %}
+    </span>
   </div>
 
-  {% if status.online %}
-  <div class="grid-4">
+  <div id="stats-section" class="grid-4" {% if not status.online %}style="display:none"{% endif %}>
     <div>
       <div class="stat-label">Version</div>
-      <div class="stat-value" style="font-size:14px">{{ status.version }}</div>
+      <div id="s-version" class="stat-value" style="font-size:14px">{{ status.version }}</div>
     </div>
     <div>
       <div class="stat-label">Latence</div>
-      <div class="stat-value {{ pc(status.latency) }}">{{ status.latency }} ms</div>
+      <div id="s-latency" class="stat-value {{ pc(status.latency) }}">{{ status.latency }} ms</div>
     </div>
     <div>
       <div class="stat-label">Joueurs</div>
-      <div class="stat-value">
+      <div id="s-players" class="stat-value">
         <span class="c-green">{{ status.players_online }}</span>
         <span style="color:var(--text-dim);font-size:14px"> / {{ status.players_max }}</span>
       </div>
     </div>
     <div>
       <div class="stat-label">MOTD</div>
-      <div class="stat-value" style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ status.motd }}</div>
+      <div id="s-motd" class="stat-value" style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ status.motd }}</div>
     </div>
   </div>
-  {% else %}
-  <p style="color:var(--error);font-size:14px">Serveur inaccessible — vérifiez que le service est démarré.</p>
-  {% endif %}
+  <div id="offline-msg" {% if status.online %}style="display:none"{% endif %}>
+    <p style="color:var(--error);font-size:14px">Serveur inaccessible — vérifiez que le service est démarré.</p>
+  </div>
 </div>
 
-<!-- Ressources système -->
 <p class="card-title">Ressources système</p>
 <div class="grid-3">
-
   <div class="card">
     <div class="card-title">CPU</div>
-    <div class="flex justify-between items-center">
-      <span class="stat-value {{ tc(metrics.cpu) }}">{{ metrics.cpu }}%</span>
-    </div>
-    <div class="progress-track"><div class="progress-bar {{ bar(metrics.cpu) }}" style="width:{{ metrics.cpu }}%"></div></div>
+    <span id="cpu-val" class="stat-value {{ tc(metrics.cpu) }}">{{ metrics.cpu }}%</span>
+    <div class="progress-track"><div id="cpu-bar" class="progress-bar {{ bar(metrics.cpu) }}" style="width:{{ metrics.cpu }}%"></div></div>
   </div>
-
   <div class="card">
     <div class="card-title">RAM</div>
     <div class="flex justify-between items-center">
-      <span class="stat-value {{ tc(metrics.ram_pct) }}">{{ metrics.ram_pct }}%</span>
-      <span style="font-size:12px;color:var(--text-dim)">{{ metrics.ram_used_gb }} / {{ metrics.ram_total_gb }} Go</span>
+      <span id="ram-val" class="stat-value {{ tc(metrics.ram_pct) }}">{{ metrics.ram_pct }}%</span>
+      <span id="ram-extra" style="font-size:12px;color:var(--text-dim)">{{ metrics.ram_used_gb }} / {{ metrics.ram_total_gb }} Go</span>
     </div>
-    <div class="progress-track"><div class="progress-bar {{ bar(metrics.ram_pct) }}" style="width:{{ metrics.ram_pct }}%"></div></div>
+    <div class="progress-track"><div id="ram-bar" class="progress-bar {{ bar(metrics.ram_pct) }}" style="width:{{ metrics.ram_pct }}%"></div></div>
   </div>
-
   <div class="card">
     <div class="card-title">Swap</div>
     <div class="flex justify-between items-center">
-      <span class="stat-value {{ tc(metrics.swap_pct) }}">{{ metrics.swap_pct }}%</span>
-      <span style="font-size:12px;color:var(--text-dim)">{{ metrics.swap_used_gb }} / {{ metrics.swap_total_gb }} Go</span>
+      <span id="swap-val" class="stat-value {{ tc(metrics.swap_pct) }}">{{ metrics.swap_pct }}%</span>
+      <span id="swap-extra" style="font-size:12px;color:var(--text-dim)">{{ metrics.swap_used_gb }} / {{ metrics.swap_total_gb }} Go</span>
     </div>
-    <div class="progress-track"><div class="progress-bar {{ bar(metrics.swap_pct) }}" style="width:{{ metrics.swap_pct }}%"></div></div>
+    <div class="progress-track"><div id="swap-bar" class="progress-bar {{ bar(metrics.swap_pct) }}" style="width:{{ metrics.swap_pct }}%"></div></div>
   </div>
-
 </div>
+
+<script>
+const barCls = p => p < 50 ? 'bar-green' : p < 80 ? 'bar-yellow' : 'bar-red';
+const txtCls = p => p < 50 ? 'c-green'  : p < 80 ? 'c-yellow'  : 'c-red';
+const pngCls = p => p < 100 ? 'c-green' : p < 200 ? 'c-yellow' : 'c-red';
+
+function updateMetric(id, pct, extra) {
+    const v = document.getElementById(id + '-val');
+    v.textContent = pct + '%'; v.className = 'stat-value ' + txtCls(pct);
+    const b = document.getElementById(id + '-bar');
+    b.className = 'progress-bar ' + barCls(pct); b.style.width = pct + '%';
+    if (extra) document.getElementById(id + '-extra').textContent = extra;
+}
+
+new EventSource('/stream/dashboard').onmessage = e => {
+    const {status: s, metrics: m} = JSON.parse(e.data);
+    document.getElementById('dot').className  = 'dot ' + (s.online ? 'dot-green' : 'dot-red');
+    const chip = document.getElementById('chip');
+    chip.className = 'chip ' + (s.online ? 'chip-green' : 'chip-red');
+    chip.innerHTML = `<span class="material-icons-round">${s.online ? 'circle' : 'cancel'}</span> ${s.online ? 'En ligne' : 'Hors ligne'}`;
+    document.getElementById('stats-section').style.display = s.online ? 'grid' : 'none';
+    document.getElementById('offline-msg').style.display   = s.online ? 'none' : '';
+    if (s.online) {
+        document.getElementById('s-version').textContent = s.version;
+        document.getElementById('s-latency').textContent = s.latency + ' ms';
+        document.getElementById('s-latency').className   = 'stat-value ' + pngCls(s.latency);
+        document.getElementById('s-players').innerHTML   = `<span class="c-green">${s.players_online}</span><span style="color:var(--text-dim);font-size:14px"> / ${s.players_max}</span>`;
+        document.getElementById('s-motd').textContent    = s.motd;
+    }
+    updateMetric('cpu',  m.cpu,      null);
+    updateMetric('ram',  m.ram_pct,  `${m.ram_used_gb} / ${m.ram_total_gb} Go`);
+    updateMetric('swap', m.swap_pct, `${m.swap_used_gb} / ${m.swap_total_gb} Go`);
+};
+</script>
 {% endblock %}

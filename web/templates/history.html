@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Historique{% endblock %}
+{% block content %}
+<meta http-equiv="refresh" content="60">
+
+<div class="page-header">
+  <h1><span class="material-icons-round">history</span> Historique des connexions</h1>
+  <div style="display:flex;gap:8px;margin-left:auto">
+    <a href="/history?days=1"  class="btn {% if days == 1  %}btn-primary{% else %}btn-outline{% endif %}" style="padding:7px 14px;font-size:13px">24h</a>
+    <a href="/history?days=7"  class="btn {% if days == 7  %}btn-primary{% else %}btn-outline{% endif %}" style="padding:7px 14px;font-size:13px">7j</a>
+    <a href="/history?days=30" class="btn {% if days == 30 %}btn-primary{% else %}btn-outline{% endif %}" style="padding:7px 14px;font-size:13px">30j</a>
+    <a href="/history"         class="btn {% if not days   %}btn-primary{% else %}btn-outline{% endif %}" style="padding:7px 14px;font-size:13px">Tout</a>
+  </div>
+</div>
+
+{% if events %}
+<div class="card" style="padding:0;overflow:hidden">
+  <table style="width:100%;border-collapse:collapse">
+    <thead>
+      <tr style="background:var(--surface-var);border-bottom:1px solid var(--outline-var)">
+        <th style="padding:12px 20px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em">Joueur</th>
+        <th style="padding:12px 20px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em">Événement</th>
+        <th style="padding:12px 20px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em">Quand</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ev in events %}
+      <tr style="border-bottom:1px solid var(--outline-var)">
+        <td style="padding:11px 20px">
+          <div style="display:flex;align-items:center;gap:10px">
+            {% if ev.uuid %}
+            <img src="https://mc-heads.net/avatar/{{ ev.uuid }}/24.png" width="24" height="24" style="image-rendering:pixelated;border-radius:3px">
+            {% else %}
+            <div style="width:24px;height:24px;background:var(--surface-high);border-radius:3px"></div>
+            {% endif %}
+            <span style="font-weight:600;font-size:14px">{{ ev.player }}</span>
+          </div>
+        </td>
+        <td style="padding:11px 20px">
+          {% if ev.type == 'join' %}
+          <span class="chip chip-green"><span class="material-icons-round">login</span> Connexion</span>
+          {% else %}
+          <span class="chip chip-red"><span class="material-icons-round">logout</span> Déconnexion</span>
+          {% endif %}
+        </td>
+        <td style="padding:11px 20px;font-size:13px;color:var(--text-dim)" data-ts="{{ ev.timestamp }}">{{ ev.timestamp }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:64px">
+  <span class="material-icons-round" style="font-size:48px;color:var(--text-muted)">manage_history</span>
+  <p style="color:var(--text-muted);margin-top:14px">Aucun événement sur cette période</p>
+</div>
+{% endif %}
+
+<script>
+document.querySelectorAll('[data-ts]').forEach(el => {
+    const ts   = new Date(el.dataset.ts + 'Z');
+    const diff = Math.floor((Date.now() - ts) / 1000);
+    if      (diff < 60)    el.textContent = "à l'instant";
+    else if (diff < 3600)  el.textContent = `il y a ${Math.floor(diff / 60)} min`;
+    else if (diff < 86400) el.textContent = `il y a ${Math.floor(diff / 3600)}h`;
+    else                   el.textContent = `il y a ${Math.floor(diff / 86400)}j`;
+    el.title = ts.toLocaleString('fr-FR');
+});
+</script>
+{% endblock %}

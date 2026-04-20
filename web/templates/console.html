@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Console{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1><span class="material-icons-round">terminal</span> Console RCON</h1>
+</div>
+
+{% if not rcon_configured %}
+<div class="card" style="text-align:center;padding:52px 24px">
+  <span class="material-icons-round" style="font-size:48px;color:var(--text-muted)">power_off</span>
+  <p style="font-weight:700;margin-top:16px;font-size:16px">RCON non configuré</p>
+  <p style="color:var(--text-muted);margin-top:8px;font-size:14px">
+    Activez RCON dans <code style="background:var(--surface-high);padding:2px 6px;border-radius:4px;font-family:monospace">server.properties</code>
+    puis renseignez les paramètres dans <a href="/settings" style="color:var(--primary)">Config</a>.
+  </p>
+  <pre style="background:var(--surface-var);border:1px solid var(--outline-var);border-radius:var(--radius-sm);padding:16px;margin:20px auto 0;max-width:320px;text-align:left;font-size:12px;color:var(--text-dim);font-family:monospace">enable-rcon=true
+rcon.port=25575
+rcon.password=VotreMotDePasse</pre>
+</div>
+
+{% else %}
+<div class="card">
+  <div id="output" class="log-viewer" style="height:440px;margin-bottom:14px">
+    <div class="l-default">Console prête. Tapez une commande et appuyez sur Entrée.</div>
+  </div>
+  <form id="rcon-form" style="display:flex;gap:10px">
+    <input id="cmd" type="text" placeholder="say Bonjour !" autofocus
+           style="flex:1;background:var(--surface-var);border:1px solid var(--outline-var);border-radius:var(--radius-sm);color:var(--text);padding:11px 14px;font-size:14px;font-family:inherit;outline:none;transition:border-color .15s">
+    <button type="submit" class="btn btn-primary">
+      <span class="material-icons-round">send</span> Envoyer
+    </button>
+  </form>
+</div>
+
+<script>
+const output = document.getElementById('output');
+const form   = document.getElementById('rcon-form');
+const input  = document.getElementById('cmd');
+
+input.addEventListener('focus', () => input.style.borderColor = 'var(--primary)');
+input.addEventListener('blur',  () => input.style.borderColor = 'var(--outline-var)');
+
+function log(text, cls) {
+    const d = document.createElement('div');
+    d.className = cls; d.textContent = text;
+    output.appendChild(d);
+    output.scrollTop = output.scrollHeight;
+}
+
+const history = []; let histIdx = -1;
+input.addEventListener('keydown', e => {
+    if (e.key === 'ArrowUp')   { e.preventDefault(); if (histIdx < history.length - 1) input.value = history[++histIdx]; }
+    if (e.key === 'ArrowDown') { e.preventDefault(); histIdx > 0 ? input.value = history[--histIdx] : (input.value = '', histIdx = -1); }
+});
+
+form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const cmd = input.value.trim();
+    if (!cmd) return;
+    history.unshift(cmd); histIdx = -1;
+    input.value = '';
+    log('> ' + cmd, 'l-info');
+    try {
+        const r = await fetch('/console/exec', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({command: cmd}),
+        });
+        const d = await r.json();
+        log(d.response ?? d.error, d.error ? 'l-error' : 'l-default');
+    } catch {
+        log('Erreur réseau', 'l-error');
+    }
+    input.focus();
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -3,7 +3,13 @@ from pathlib import Path
 from config import settings
 
 _path = Path(settings.settings_path)
-_defaults: dict = {"webhook_url": "", "poll_delay": 60}
+_defaults: dict = {
+    "webhook_url": "",
+    "poll_delay": 60,
+    "rcon_host": "",
+    "rcon_port": 25575,
+    "rcon_password": "",
+}
 
 
 def read() -> dict:

@@ -8,34 +8,55 @@
 
 {% if saved %}
 <div class="alert alert-success">
-  <span class="material-icons-round">check_circle</span>
-  Configuration sauvegardée.
+  <span class="material-icons-round">check_circle</span> Configuration sauvegardée.
 </div>
 {% endif %}
 
-<div class="card" style="max-width:560px">
-  <p class="card-title">Notifieur Discord</p>
-  <form method="post" action="/settings">
+<form method="post" action="/settings" style="max-width:560px">
+
+  <div class="card mb-6">
+    <p class="card-title">Notifieur Discord</p>
     <div class="field">
       <label>URL Webhook Discord</label>
-      <input type="url" name="webhook_url" value="{{ cfg.webhook_url }}"
-             placeholder="https://discord.com/api/webhooks/...">
+      <input type="url" name="webhook_url" value="{{ cfg.webhook_url }}" placeholder="https://discord.com/api/webhooks/...">
       <span class="hint">Laissez vide pour désactiver les notifications.</span>
     </div>
-    <div class="field">
+    <div class="field" style="margin-bottom:0">
       <label>Délai de polling (secondes)</label>
       <input type="number" name="poll_delay" value="{{ cfg.poll_delay }}" min="10" max="300">
       <span class="hint">Intervalle entre deux vérifications (min 10s).</span>
     </div>
+  </div>
+
+  <div class="card mb-6">
+    <p class="card-title">Console RCON</p>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">
+      Nécessite
+      <code style="background:var(--surface-high);padding:2px 6px;border-radius:4px;font-size:12px;font-family:monospace">enable-rcon=true</code>
+      dans <code style="background:var(--surface-high);padding:2px 6px;border-radius:4px;font-size:12px;font-family:monospace">server.properties</code>.
+    </p>
+    <div class="field">
+      <label>Host RCON</label>
+      <input type="text" name="rcon_host" value="{{ cfg.rcon_host }}" placeholder="{{ mc_host }}">
+    </div>
+    <div class="field">
+      <label>Port RCON</label>
+      <input type="number" name="rcon_port" value="{{ cfg.rcon_port }}" min="1" max="65535">
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <label>Mot de passe RCON</label>
+      <input type="password" name="rcon_password" value="{{ cfg.rcon_password }}" placeholder="••••••••">
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;align-items:center">
     <button type="submit" class="btn btn-primary">
       <span class="material-icons-round">save</span> Sauvegarder
     </button>
-  </form>
-</div>
+    <a href="/logout" class="btn btn-outline">
+      <span class="material-icons-round">logout</span> Déconnexion
+    </a>
+  </div>
 
-<div style="margin-top:24px">
-  <a href="/logout" class="btn btn-outline">
-    <span class="material-icons-round">logout</span> Déconnexion
-  </a>
-</div>
+</form>
 {% endblock %}

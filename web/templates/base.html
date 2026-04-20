@@ -197,10 +197,16 @@
     <a href="/players" class="nav-link {% if request.url.path == '/players' %}active{% endif %}">
       <span class="material-icons-round">group</span> Joueurs
     </a>
+    <a href="/history" class="nav-link {% if request.url.path == '/history' %}active{% endif %}">
+      <span class="material-icons-round">history</span> Historique
+    </a>
     <a href="/logs"    class="nav-link {% if request.url.path == '/logs' %}active{% endif %}">
-      <span class="material-icons-round">terminal</span> Journaux
+      <span class="material-icons-round">receipt_long</span> Journaux
     </a>
     <div class="nav-spacer"></div>
+    <a href="/console"  class="nav-link {% if request.url.path == '/console' %}active{% endif %}">
+      <span class="material-icons-round">terminal</span> Console
+    </a>
     <a href="/settings" class="nav-link {% if '/settings' in request.url.path or request.url.path == '/login' %}active{% endif %}">
       <span class="material-icons-round">settings</span> Config
     </a>
