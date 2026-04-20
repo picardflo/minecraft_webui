@@ -45,11 +45,10 @@ def get_system_metrics() -> dict:
     _prev_disk = disk_c
     _prev_ts   = now
 
-    # /host/proc/uptime contient l'uptime réel du host (monotonique, non affecté
-    # par les migrations VM ni NTP, contrairement à btime dans /proc/stat).
+    # CLOCK_BOOTTIME est un syscall kernel direct, non affecté par le namespace
+    # de montage procfs que Docker crée (contrairement à /proc/uptime).
     try:
-        proc_root = settings.host_proc or "/proc"
-        vm_uptime_s = int(float(Path(proc_root + "/uptime").read_text().split()[0]))
+        vm_uptime_s = int(time.clock_gettime(time.CLOCK_BOOTTIME))
     except Exception:
         vm_uptime_s = 0
 
