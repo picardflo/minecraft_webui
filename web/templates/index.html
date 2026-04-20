@@ -96,7 +96,7 @@
 <div style="margin-top:12px;display:flex;gap:24px;font-size:12px;color:var(--text-muted);font-weight:600">
   <span>
     <span class="material-icons-round" style="font-size:13px">computer</span>
-    Serveur actif depuis <span id="vm-uptime" style="color:var(--text-dim)">—</span>
+    Machine active depuis <span id="vm-uptime" style="color:var(--text-dim)">—</span>
   </span>
   <span>
     <span class="material-icons-round" style="font-size:13px">arrow_downward</span>
@@ -154,10 +154,8 @@ new EventSource('/stream/dashboard').onmessage = e => {
     updateMetric('disk', m.disk_pct, `${m.disk_used_gb} / ${m.disk_total_gb} Go`);
     document.getElementById('net-in').textContent  = m.net_in_kbs;
     document.getElementById('net-out').textContent = m.net_out_kbs;
-    const vms = m.vm_uptime_s;
-    const vh  = Math.floor(vms / 3600), vm = Math.floor((vms % 3600) / 60);
-    document.getElementById('vm-uptime').textContent =
-        vms < 60 ? `${vms}s` : vms < 3600 ? `${vm}min` : `${vh}h ${String(vm).padStart(2,'0')}min`;
+    const svrUp = fmtUptime(online_since);
+    document.getElementById('vm-uptime').textContent = (s.online && svrUp) ? svrUp : '—';
 };
 </script>
 {% endblock %}
