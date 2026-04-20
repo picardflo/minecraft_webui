@@ -9,18 +9,22 @@ from config import settings
 if settings.host_proc:
     psutil.PROCFS_PATH = settings.host_proc
 
+# État partagé SSE (fenêtre ~5s)
 _prev_net  = None
 _prev_disk = None
 _prev_ts   = None
 
+# État indépendant pour le recorder (fenêtre ~5min, pas de race condition avec SSE)
+_prev_net_rec  = None
+_prev_disk_rec = None
+_prev_ts_rec   = None
 
-def get_system_metrics() -> dict:
-    global _prev_net, _prev_disk, _prev_ts
 
+def _compute_metrics(prev_net, prev_disk, prev_ts) -> tuple[dict, object, object, float]:
+    """Calcule les métriques et renvoie (résultats, net_c, disk_c, now)."""
     ram  = psutil.virtual_memory()
     swap = psutil.swap_memory()
 
-    # Disk usage
     try:
         disk = psutil.disk_usage(settings.host_srv)
         disk_pct      = round(disk.percent, 1)
@@ -29,34 +33,25 @@ def get_system_metrics() -> dict:
     except Exception:
         disk_pct = disk_used_gb = disk_total_gb = 0
 
-    # Network & disk I/O rates (KB/s)
-    now      = time.monotonic()
-    net_c    = psutil.net_io_counters()
-    disk_c   = psutil.disk_io_counters()
+    now    = time.monotonic()
+    net_c  = psutil.net_io_counters()
+    disk_c = psutil.disk_io_counters()
     net_in = net_out = disk_read = disk_write = 0.0
-    if _prev_net and _prev_ts:
-        dt = now - _prev_ts
+    if prev_net and prev_ts:
+        dt = now - prev_ts
         if dt > 0:
-            net_in    = max(0, round((net_c.bytes_recv  - _prev_net.bytes_recv)  / dt / 1024, 1))
-            net_out   = max(0, round((net_c.bytes_sent  - _prev_net.bytes_sent)  / dt / 1024, 1))
-            if _prev_disk and disk_c:
-                disk_read  = max(0, round((disk_c.read_bytes  - _prev_disk.read_bytes)  / dt / 1024, 1))
-                disk_write = max(0, round((disk_c.write_bytes - _prev_disk.write_bytes) / dt / 1024, 1))
-    _prev_net  = net_c
-    _prev_disk = disk_c
-    _prev_ts   = now
+            net_in    = max(0, round((net_c.bytes_recv  - prev_net.bytes_recv)  / dt / 1024, 1))
+            net_out   = max(0, round((net_c.bytes_sent  - prev_net.bytes_sent)  / dt / 1024, 1))
+            if prev_disk and disk_c:
+                disk_read  = max(0, round((disk_c.read_bytes  - prev_disk.read_bytes)  / dt / 1024, 1))
+                disk_write = max(0, round((disk_c.write_bytes - prev_disk.write_bytes) / dt / 1024, 1))
 
-    # Générique : CLOCK_BOOTTIME bypasse les namespaces → uptime de la couche physique.
-    # PID 1 de /host/proc = init de la couche hôte directe (LXC, VM, bare-metal).
-    # starttime (jiffies depuis le boot physique) soustrait à CLOCK_BOOTTIME
-    # donne l'uptime de cet hôte quel que soit l'environnement.
     try:
         proxmox_uptime = time.clock_gettime(time.CLOCK_BOOTTIME)
         proc_root = settings.host_proc or "/proc"
         stat_text = Path(proc_root + "/1/stat").read_text()
-        # starttime = champ 22 ; parse après la comm "(…)" qui peut contenir des espaces
         after_comm = stat_text[stat_text.rfind(")") + 2:]
-        starttime_ticks = int(after_comm.split()[19])  # champ 22 → index 19 après comm
+        starttime_ticks = int(after_comm.split()[19])
         try:
             clk_tck = os.sysconf("SC_CLK_TCK")
         except Exception:
@@ -65,7 +60,7 @@ def get_system_metrics() -> dict:
     except Exception:
         vm_uptime_s = 0
 
-    return {
+    metrics = {
         "cpu":           round(psutil.cpu_percent(interval=0.5), 1),
         "ram_pct":       round(ram.percent, 1),
         "ram_used_gb":   round(ram.used  / 1024**3, 1),
@@ -82,3 +77,20 @@ def get_system_metrics() -> dict:
         "disk_write_kbs":disk_write,
         "vm_uptime_s":   vm_uptime_s,
     }
+    return metrics, net_c, disk_c, now
+
+
+def get_system_metrics() -> dict:
+    """SSE dashboard — fenêtre courte (~5s), état partagé _prev_*."""
+    global _prev_net, _prev_disk, _prev_ts
+    metrics, net_c, disk_c, now = _compute_metrics(_prev_net, _prev_disk, _prev_ts)
+    _prev_net, _prev_disk, _prev_ts = net_c, disk_c, now
+    return metrics
+
+
+def get_system_metrics_for_record() -> dict:
+    """Metrics recorder — état indépendant (~5min), pas de race avec SSE."""
+    global _prev_net_rec, _prev_disk_rec, _prev_ts_rec
+    metrics, net_c, disk_c, now = _compute_metrics(_prev_net_rec, _prev_disk_rec, _prev_ts_rec)
+    _prev_net_rec, _prev_disk_rec, _prev_ts_rec = net_c, disk_c, now
+    return metrics

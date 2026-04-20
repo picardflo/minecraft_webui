@@ -20,7 +20,7 @@ from config import settings
 from minecraft import get_players, get_server_status
 from rcon_client import execute_rcon
 from settings_store import read as read_settings, write as write_settings
-from system import get_system_metrics
+from system import get_system_metrics, get_system_metrics_for_record
 
 _live_players: dict[str, str] = {}
 _server_online_since: str | None = None
@@ -80,7 +80,7 @@ async def metrics_recorder() -> None:
         try:
             status, metrics = await asyncio.gather(
                 get_server_status(),
-                asyncio.to_thread(get_system_metrics),
+                asyncio.to_thread(get_system_metrics_for_record),
             )
             is_online = status.get("online", False)
             if is_online and not was_online:
