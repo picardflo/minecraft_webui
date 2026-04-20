@@ -47,8 +47,11 @@ async def player_tracker() -> None:
 async def metrics_recorder() -> None:
     global _server_online_since
     was_online = False
+    first = True
     while True:
-        await asyncio.sleep(300)
+        if not first:
+            await asyncio.sleep(300)
+        first = False
         try:
             status, metrics = await asyncio.gather(
                 get_server_status(),
