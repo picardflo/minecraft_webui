@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +8,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Press+Start+2P&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <script>
+    (function () {
+      const t = localStorage.getItem('mc-theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
   <style>
+    /* ── Thème sombre (défaut) ─────────────────────────────────────────────── */
     :root {
       --bg:           #17181c;
       --nav-bg:       #0e0f12;
@@ -25,20 +32,43 @@
       --text-muted:   #4e5260;
       --error:        #e05252;
       --warning:      #d98c35;
+      --log-bg:       #0d0e10;
+      --nav-shadow:   rgba(0,0,0,.5);
       --radius-sm:    6px;
       --radius-md:    12px;
       --radius-lg:    18px;
     }
 
+    /* ── Thème clair ───────────────────────────────────────────────────────── */
+    [data-theme="light"] {
+      --bg:           #f4f5f7;
+      --nav-bg:       #ffffff;
+      --surface:      #ffffff;
+      --surface-var:  #f0f1f5;
+      --surface-high: #e2e4eb;
+      --primary:      #3d8a1a;
+      --primary-lit:  #4da020;
+      --on-primary:   #ffffff;
+      --outline-var:  #e4e5ec;
+      --outline:      #c8cad6;
+      --text:         #1a1b1f;
+      --text-dim:     #585c6e;
+      --text-muted:   #8e92a4;
+      --error:        #cc3333;
+      --warning:      #b87828;
+      --log-bg:       #1a1b1f;
+      --nav-shadow:   rgba(0,0,0,.1);
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: 'Nunito', sans-serif; min-height: 100vh; }
+    body { background: var(--bg); color: var(--text); font-family: 'Nunito', sans-serif; min-height: 100vh; transition: background .2s, color .2s; }
 
     /* ── Nav ── */
     nav {
       background: var(--nav-bg);
       border-bottom: 1px solid var(--outline-var);
       position: sticky; top: 0; z-index: 100;
-      box-shadow: 0 2px 12px rgba(0,0,0,.5);
+      box-shadow: 0 2px 12px var(--nav-shadow);
     }
     .nav-inner {
       max-width: 1140px; margin: 0 auto; padding: 0 28px;
@@ -62,6 +92,13 @@
     .nav-link.active { color: var(--primary); border-bottom-color: var(--primary); }
     .nav-link .material-icons-round { font-size: 17px; }
     .nav-spacer { flex: 1; }
+    .nav-theme-btn {
+      display: flex; align-items: center; padding: 0 12px;
+      background: none; border: none; cursor: pointer;
+      color: var(--text-muted); transition: color .15s;
+    }
+    .nav-theme-btn:hover { color: var(--primary); }
+    .nav-theme-btn .material-icons-round { font-size: 20px; }
 
     /* ── Layout ── */
     main { max-width: 1140px; margin: 0 auto; padding: 32px 28px; }
@@ -150,7 +187,7 @@
 
     /* ── Log viewer ── */
     .log-viewer {
-      background: #0d0e10; border: 1px solid var(--outline-var);
+      background: var(--log-bg); border: 1px solid var(--outline-var);
       border-radius: var(--radius-md); padding: 18px 22px;
       font-family: 'Roboto Mono', monospace; font-size: 12px;
       line-height: 1.8; overflow-y: auto; max-height: 70vh;
@@ -208,6 +245,9 @@
       <span class="material-icons-round">bar_chart</span> Stats
     </a>
     <div class="nav-spacer"></div>
+    <button class="nav-theme-btn" onclick="toggleTheme()" title="Changer de thème">
+      <span class="material-icons-round" id="theme-icon">light_mode</span>
+    </button>
     <a href="/console"  class="nav-link {% if request.url.path == '/console' %}active{% endif %}">
       <span class="material-icons-round">terminal</span> Console
     </a>
@@ -224,6 +264,20 @@
 <footer style="text-align:center;padding:18px 0 24px;font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:.06em">
   v{{ version }}
 </footer>
+
+<script>
+  function toggleTheme() {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('mc-theme', next);
+    document.getElementById('theme-icon').textContent = next === 'dark' ? 'light_mode' : 'dark_mode';
+  }
+
+  (function () {
+    const t = localStorage.getItem('mc-theme') || 'dark';
+    document.getElementById('theme-icon').textContent = t === 'dark' ? 'light_mode' : 'dark_mode';
+  })();
+</script>
 
 </body>
 </html>
