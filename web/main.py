@@ -1,5 +1,7 @@
 import asyncio
+import base64
 import json
+import urllib.request
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -48,6 +50,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+templates.env.globals["version"] = Path("VERSION").read_text().strip()
 
 
 @app.get("/health")
@@ -99,8 +102,71 @@ async def dashboard(request: Request):
 @app.get("/players", response_class=HTMLResponse)
 async def players_page(request: Request):
     return templates.TemplateResponse("players.html", {
-        "request": request, "players": await get_players(),
+        "request": request,
+        "players": await get_players(),
+        "is_admin": is_authenticated(request),
     })
+
+
+@app.get("/api/player/{uuid}")
+async def player_profile(uuid: str):
+    def _fetch():
+        url = f"https://sessionserver.mojang.com/session/minecraft/profile/{uuid}"
+        with urllib.request.urlopen(url, timeout=5) as r:
+            return json.loads(r.read())
+    try:
+        data = await asyncio.to_thread(_fetch)
+        skin_type, has_cape = "Steve", False
+        for prop in data.get("properties", []):
+            if prop["name"] == "textures":
+                tex = json.loads(base64.b64decode(prop["value"]))
+                if tex.get("textures", {}).get("SKIN", {}).get("metadata", {}).get("model") == "slim":
+                    skin_type = "Alex"
+                has_cape = "CAPE" in tex.get("textures", {})
+        return JSONResponse({"name": data["name"], "uuid": data["id"],
+                             "skin_type": skin_type, "has_cape": has_cape})
+    except Exception:
+        return JSONResponse({"error": "Profil indisponible"}, status_code=404)
+
+
+@app.post("/players/kick")
+async def player_kick(request: Request):
+    if not is_authenticated(request):
+        return JSONResponse({"error": "Non authentifié"}, status_code=401)
+    body = await request.json()
+    name = body.get("name", "").strip()
+    if not name:
+        return JSONResponse({"error": "Nom manquant"}, status_code=400)
+    cfg = read_settings()
+    if not cfg.get("rcon_password"):
+        return JSONResponse({"error": "RCON non configuré"}, status_code=503)
+    result = await execute_rcon(
+        cfg.get("rcon_host") or settings.mc_host,
+        cfg.get("rcon_port", 25575),
+        cfg["rcon_password"],
+        f"kick {name}",
+    )
+    return JSONResponse({"response": result})
+
+
+@app.post("/players/ban")
+async def player_ban(request: Request):
+    if not is_authenticated(request):
+        return JSONResponse({"error": "Non authentifié"}, status_code=401)
+    body = await request.json()
+    name = body.get("name", "").strip()
+    if not name:
+        return JSONResponse({"error": "Nom manquant"}, status_code=400)
+    cfg = read_settings()
+    if not cfg.get("rcon_password"):
+        return JSONResponse({"error": "RCON non configuré"}, status_code=503)
+    result = await execute_rcon(
+        cfg.get("rcon_host") or settings.mc_host,
+        cfg.get("rcon_port", 25575),
+        cfg["rcon_password"],
+        f"ban {name}",
+    )
+    return JSONResponse({"response": result})
 
 
 @app.get("/history", response_class=HTMLResponse)

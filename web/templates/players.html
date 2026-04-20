@@ -11,9 +11,9 @@
 {% if players %}
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:16px">
   {% for p in players %}
-  <div class="player-card">
+  <div class="player-card" style="cursor:pointer" onclick="openModal('{{ p.name }}','{{ p.uuid }}')">
     {% if p.uuid %}
-    <img src="https://mc-heads.net/avatar/{{ p.uuid }}/64.png" alt="{{ p.name }}" width="64" height="64">
+    <img src="https://mc-heads.net/avatar/{{ p.uuid }}/64.png" alt="{{ p.name }}" width="64" height="64" style="image-rendering:pixelated;border-radius:5px">
     {% else %}
     <div style="width:64px;height:64px;background:var(--surface-high);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:28px">?</div>
     {% endif %}
@@ -29,25 +29,132 @@
 {% endif %}
 </div>
 
+<!-- Modal -->
+<div id="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--surface);border:1px solid var(--outline-var);border-radius:var(--radius-lg);padding:28px 24px;max-width:360px;width:100%;position:relative">
+
+    <button onclick="closeModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;color:var(--text-muted)">
+      <span class="material-icons-round">close</span>
+    </button>
+
+    <div style="display:flex;gap:20px;align-items:flex-start">
+      <img id="m-body" src="" alt="" width="60" style="image-rendering:pixelated;border-radius:4px;flex-shrink:0">
+      <div style="flex:1;min-width:0">
+        <div id="m-name" style="font-size:18px;font-weight:800;margin-bottom:6px"></div>
+        <div id="m-loading" style="font-size:12px;color:var(--text-muted)">Chargement…</div>
+        <div id="m-info" style="display:none;font-size:12px;line-height:1.9;color:var(--text-dim)"></div>
+      </div>
+    </div>
+
+    {% if is_admin %}
+    <div id="m-actions" style="display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--outline-var)">
+      <button id="btn-kick" onclick="doAction('kick')"
+        style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;border-radius:var(--radius-sm);border:1px solid var(--warning);color:var(--warning);background:rgba(217,140,53,.1);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s">
+        <span class="material-icons-round" style="font-size:16px">logout</span> Kick
+      </button>
+      <button id="btn-ban" onclick="doAction('ban')"
+        style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;border-radius:var(--radius-sm);border:1px solid var(--error);color:var(--error);background:rgba(224,82,82,.1);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s">
+        <span class="material-icons-round" style="font-size:16px">gavel</span> Ban
+      </button>
+    </div>
+    {% endif %}
+
+    <div id="m-feedback" style="display:none;margin-top:12px;font-size:12px;font-weight:700;padding:8px 12px;border-radius:var(--radius-sm)"></div>
+  </div>
+</div>
+
 <script>
+const IS_ADMIN = {{ 'true' if is_admin else 'false' }};
+let currentPlayer = null;
+
 const empty = `<div class="card" style="text-align:center;padding:64px 24px">
   <span class="material-icons-round" style="font-size:48px;color:var(--text-muted)">person_off</span>
   <p style="color:var(--text-muted);margin-top:14px;font-size:15px">Aucun joueur en ligne</p>
 </div>`;
+
+function cardHTML(p) {
+    return `<div class="player-card" style="cursor:pointer" onclick="openModal('${p.name}','${p.uuid}')">
+        ${p.uuid
+            ? `<img src="https://mc-heads.net/avatar/${p.uuid}/64.png" width="64" height="64" style="image-rendering:pixelated;border-radius:5px">`
+            : `<div style="width:64px;height:64px;background:var(--surface-high);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:28px">?</div>`}
+        <span class="player-name">${p.name}</span>
+    </div>`;
+}
 
 function renderPlayers(players) {
     document.getElementById('player-count').textContent = players.length + ' joueur(s) en ligne';
     const grid = document.getElementById('players-grid');
     if (!players.length) { grid.innerHTML = empty; return; }
     grid.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:16px">` +
-        players.map(p => `<div class="player-card">
-            ${p.uuid
-                ? `<img src="https://mc-heads.net/avatar/${p.uuid}/64.png" width="64" height="64" style="image-rendering:pixelated;border-radius:5px">`
-                : `<div style="width:64px;height:64px;background:var(--surface-high);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:28px">?</div>`}
-            <span class="player-name">${p.name}</span>
-        </div>`).join('') + `</div>`;
+        players.map(cardHTML).join('') + `</div>`;
 }
 
 new EventSource('/stream/players').onmessage = e => renderPlayers(JSON.parse(e.data));
+
+// ── Modal ──────────────────────────────────────────────────────────────────
+
+async function openModal(name, uuid) {
+    currentPlayer = {name, uuid};
+    const overlay = document.getElementById('modal-overlay');
+    overlay.style.display = 'flex';
+    document.getElementById('m-name').textContent = name;
+    document.getElementById('m-body').src = uuid
+        ? `https://mc-heads.net/body/${uuid}/80.png`
+        : '';
+    document.getElementById('m-loading').style.display = '';
+    document.getElementById('m-info').style.display = 'none';
+    document.getElementById('m-feedback').style.display = 'none';
+
+    if (!uuid) { document.getElementById('m-loading').textContent = 'UUID indisponible'; return; }
+
+    try {
+        const r = await fetch(`/api/player/${uuid}`);
+        const d = await r.json();
+        if (d.error) { document.getElementById('m-loading').textContent = d.error; return; }
+        document.getElementById('m-loading').style.display = 'none';
+        const uuidFmt = [uuid.slice(0,8),uuid.slice(8,12),uuid.slice(12,16),uuid.slice(16,20),uuid.slice(20)].join('-');
+        document.getElementById('m-info').innerHTML =
+            `<span style="color:var(--text-muted)">UUID</span><br>` +
+            `<span style="font-family:monospace;font-size:10px;word-break:break-all">${uuidFmt}</span><br><br>` +
+            `<span style="color:var(--text-muted)">Modèle skin</span> ${d.skin_type}<br>` +
+            `<span style="color:var(--text-muted)">Cape</span> ${d.has_cape ? '✔ oui' : '✘ non'}`;
+        document.getElementById('m-info').style.display = '';
+    } catch {
+        document.getElementById('m-loading').textContent = 'Erreur réseau';
+    }
+}
+
+function closeModal() {
+    document.getElementById('modal-overlay').style.display = 'none';
+    currentPlayer = null;
+}
+
+document.getElementById('modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+
+// ── Actions admin ──────────────────────────────────────────────────────────
+
+async function doAction(action) {
+    if (!currentPlayer) return;
+    const label = action === 'kick' ? 'expulser' : 'bannir';
+    if (!confirm(`Voulez-vous vraiment ${label} ${currentPlayer.name} ?`)) return;
+
+    const btn = document.getElementById(`btn-${action}`);
+    btn.disabled = true;
+
+    const r = await fetch(`/players/${action}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name: currentPlayer.name}),
+    });
+    const d = await r.json();
+    const fb = document.getElementById('m-feedback');
+    fb.textContent = d.response ?? d.error;
+    fb.style.display = '';
+    fb.style.background = d.error ? 'rgba(224,82,82,.12)' : 'rgba(88,166,41,.12)';
+    fb.style.color = d.error ? 'var(--error)' : 'var(--primary)';
+    btn.disabled = false;
+}
 </script>
 {% endblock %}
