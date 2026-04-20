@@ -2,7 +2,7 @@
 
 Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications Discord et console RCON.
 
-![Version](https://img.shields.io/badge/version-1.2.0-green)
+![Version](https://img.shields.io/badge/version-1.3.0-green)
 ![Docker](https://img.shields.io/badge/docker-compose-blue)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 
@@ -25,7 +25,9 @@ Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications 
 - **Journaux** — 100 dernières lignes du log serveur avec coloration par niveau et filtre en temps réel
 - **Notifications Discord** — embed avec skin du joueur envoyé à chaque connexion/déconnexion
 - **Console RCON** — terminal interactif avec mémo des commandes courantes (admin)
+- **Apparence** — bannière serveur et favicon personnalisables depuis l'interface (upload admin)
 - **Config UI** — webhook Discord et paramètres RCON modifiables depuis l'interface, protégés par mot de passe
+- **Versioning** — version affichée dans le footer (fichier `web/VERSION`)
 
 ## Stack
 
