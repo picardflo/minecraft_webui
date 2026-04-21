@@ -126,7 +126,7 @@ async def metrics_recorder() -> None:
 async def lifespan(app: FastAPI):
     ensure_pwa_icons()
     cfg = read_settings()
-    if not cfg.get("vapid_private"):
+    if not cfg.get("vapid_private") or cfg["vapid_private"].startswith("-----"):
         priv, pub = generate_vapid_keys()
         write_settings({"vapid_private": priv, "vapid_public": pub})
     t1 = asyncio.create_task(player_tracker())

@@ -2,19 +2,19 @@ import base64
 import json
 
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.serialization import (
-    Encoding, NoEncryption, PrivateFormat, PublicFormat,
-)
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
 
 def generate_vapid_keys() -> tuple[str, str]:
     key = ec.generate_private_key(ec.SECP256R1())
-    private_pem = key.private_bytes(
-        Encoding.PEM, PrivateFormat.TraditionalOpenSSL, NoEncryption()
-    ).decode()
+    # pywebpush expects raw base64url-encoded 32-byte private key
+    private_int = key.private_numbers().private_value
+    private_raw = private_int.to_bytes(32, "big")
+    private_key = base64.urlsafe_b64encode(private_raw).rstrip(b"=").decode()
+    # Uncompressed public key point for the browser
     pub_bytes = key.public_key().public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
     public_key = base64.urlsafe_b64encode(pub_bytes).rstrip(b"=").decode()
-    return private_pem, public_key
+    return private_key, public_key
 
 
 def send_push(sub: dict, title: str, body: str, vapid_private: str) -> None:
