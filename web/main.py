@@ -58,7 +58,9 @@ async def _notify_push(name: str, event: str) -> None:
     emoji = "🟢" if event == "join" else "🔴"
     action = "Connexion" if event == "join" else "Déconnexion"
     for sub in subs:
-        await asyncio.to_thread(send_push, sub, f"Minecraft — {name}", f"{emoji} {action}", private)
+        ok = await asyncio.to_thread(send_push, sub, f"Minecraft — {name}", f"{emoji} {action}", private)
+        if not ok:
+            await db.delete_push_subscription(sub["endpoint"])
 
 
 async def player_tracker() -> None:
