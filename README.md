@@ -1,50 +1,54 @@
 # Minecraft WebUI
 
-Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications Discord et console RCON.
+Monitoring dashboard for Minecraft Java Edition servers, with Discord notifications and RCON console.
+
+> 🇫🇷 [Version française](README.fr.md)
 
 ![Version](https://img.shields.io/badge/version-1.9.0-green)
 ![Docker](https://img.shields.io/badge/docker-compose-blue)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-## Aperçu
+## Screenshots
 
-| Dashboard | Joueurs |
+| Dashboard | Players |
 |---|---|
-| ![Dashboard](docs/screenshots/screenshot-dashboard.png) | ![Joueurs](docs/screenshots/screenshot-players.png) |
+| ![Dashboard](docs/screenshots/screenshot-dashboard.png) | ![Players](docs/screenshots/screenshot-players.png) |
 
-| Statistiques | Console RCON |
+| Statistics | RCON Console |
 |---|---|
 | ![Stats](docs/screenshots/screenshot-stats.png) | ![Console](docs/screenshots/screenshot-console.png) |
 
-## Fonctionnalités
+## Features
 
-- **Dashboard** — statut serveur, latence, joueurs en ligne, uptime serveur/VM, ressources système (CPU/RAM/Swap/Disque + réseau KB/s) en temps réel via SSE
-- **Joueurs** — liste des connectés avec skins Minecraft ; clic sur un joueur → modal UUID, type de skin, cape ; **Kick / Ban** admin (RCON)
-- **Historique** — journal des connexions/déconnexions persisté en SQLite (filtres 24h / 7j / 30j)
-- **Statistiques** — temps de jeu par joueur, heures de pointe, historique CPU/RAM/Disque + réseau/disque I/O 24h (Chart.js)
-- **Journaux** — 100 dernières lignes du log serveur avec coloration par niveau et filtre en temps réel
-- **Notifications Discord** — embed avec skin du joueur envoyé à chaque connexion/déconnexion
-- **Console RCON** — terminal interactif avec mémo des commandes courantes (admin)
-- **Apparence** — bannière serveur et favicon personnalisables depuis l'interface (upload admin)
-- **Thème** — bascule dark / light persistée dans le navigateur (localStorage)
-- **Config UI** — webhook Discord et paramètres RCON modifiables depuis l'interface, protégés par mot de passe
-- **Versioning** — version affichée dans le footer (fichier `web/VERSION`)
+- **Dashboard** — server status, latency, online players, server/VM uptime, system resources (CPU/RAM/Swap/Disk + network KB/s) in real time via SSE
+- **Players** — connected players list with Minecraft skins; click a player → modal with UUID, skin type, cape; **Kick / Ban** (admin, RCON)
+- **History** — connection/disconnection log persisted in SQLite (filters: 24h / 7d / 30d)
+- **Statistics** — playtime per player, peak hours, CPU/RAM/Disk + network/disk I/O history 24h (Chart.js)
+- **Logs** — last 100 lines of the server log with level coloring and real-time filter
+- **Discord notifications** — embed with player skin sent on each join/leave
+- **RCON console** — interactive terminal with a quick-reference command cheatsheet (admin)
+- **Appearance** — server banner and favicon customizable from the UI (admin upload)
+- **Theme** — dark / light toggle persisted in the browser (localStorage)
+- **Config UI** — Discord webhook and RCON settings editable from the interface, password-protected
+- **Push notifications** — browser push notifications (Web Push / VAPID) on player join/leave (Android, iOS 16.4+, desktop)
+- **PWA** — installable as a Progressive Web App on mobile (Android/iOS)
+- **Versioning** — version displayed in the footer (`web/VERSION`)
 
 ## Stack
 
-| Service | Rôle |
+| Service | Role |
 |---|---|
 | `web` | FastAPI + Jinja2 + Uvicorn |
-| `discord-notifier` | Polling async + webhooks Discord |
-| `caddy` | Reverse proxy HTTPS |
+| `discord-notifier` | Async polling + Discord webhooks |
+| `caddy` | HTTPS reverse proxy |
 
-## Prérequis
+## Requirements
 
 - Docker + Docker Compose
-- Serveur Minecraft Java avec `enable-status=true` dans `server.properties`
+- Minecraft Java server with `enable-status=true` in `server.properties`
 
-> **Note** : la page Journaux et la détection d'uptime serveur nécessitent que le fichier `latest.log` du serveur Minecraft soit accessible localement sur la machine qui héberge Docker (paramètre `MC_LOG_PATH`). Dans le cas d'un serveur distant, un montage réseau (NFS, sshfs…) peut suffire.
+> **Note**: the Logs page and server uptime detection require the Minecraft `latest.log` file to be accessible locally on the Docker host (via the `MC_LOG_PATH` setting). For a remote server, a network mount (NFS, sshfs…) is sufficient.
 
 ## Installation
 
@@ -61,34 +65,34 @@ docker compose up -d --build
 ## Configuration (.env)
 
 ```env
-MC_HOST=your.minecraft.server.com   # Adresse du serveur Minecraft
-MC_PORT=25565                        # Port Java (défaut 25565)
+MC_HOST=your.minecraft.server.com   # Minecraft server address
+MC_PORT=25565                        # Java port (default 25565)
 MC_LOG_PATH=/srv/minecraft/server/logs/latest.log
 
-ADMIN_PASSWORD=changeme              # Mot de passe pour /settings et /console
+ADMIN_PASSWORD=changeme              # Password for /settings and /console
 SECRET_KEY=change-this-to-a-long-random-string
 
-DOMAIN=localhost                     # Domaine utilisé par Caddy
+DOMAIN=localhost                     # Domain used by Caddy
 ```
 
 ## SSL / TLS
 
-Trois modes disponibles, sélectionnés via `CADDYFILE` dans `.env` :
+Three modes available, selected via `CADDYFILE` in `.env`:
 
-### Mode 1 — Self-signed (défaut, LAN/local)
+### Mode 1 — Self-signed (default, LAN/local)
 
-Aucune configuration supplémentaire. Caddy génère un certificat local automatiquement.
+No extra configuration. Caddy generates a local certificate automatically.
 
 ```env
 DOMAIN=mc.home.lan
-# CADDYFILE non défini → utilise Caddyfile (tls internal)
+# CADDYFILE not set → uses Caddyfile (tls internal)
 ```
 
-> Le navigateur affichera un avertissement de sécurité la première fois.
+> The browser will show a security warning the first time.
 
-### Mode 2 — Let's Encrypt (domaine public)
+### Mode 2 — Let's Encrypt (public domain)
 
-Ports 80 et 443 doivent être ouverts et le domaine doit pointer vers votre IP.
+Ports 80 and 443 must be open and the domain must point to your IP.
 
 ```env
 DOMAIN=mc.example.com
@@ -96,32 +100,32 @@ CADDYFILE=Caddyfile.letsencrypt
 TLS_EMAIL=admin@example.com
 ```
 
-### Mode 3 — Certificat existant (wildcard, entreprise…)
+### Mode 3 — Existing certificate (wildcard, corporate…)
 
-Déposer `fullchain.pem` et `privkey.pem` dans le dossier `./certs/`.
+Place `fullchain.pem` and `privkey.pem` in the `./certs/` folder.
 
 ```env
 DOMAIN=mc.home.lan
 CADDYFILE=Caddyfile.custom
 ```
 
-## Console RCON (optionnel)
+## RCON Console (optional)
 
-Activer dans `server.properties` :
+Enable in `server.properties`:
 
 ```properties
 enable-rcon=true
 rcon.port=25575
-rcon.password=VotreMotDePasse
+rcon.password=YourPassword
 ```
 
-Puis renseigner les paramètres dans l'interface `/settings`.
+Then fill in the parameters in the `/settings` interface.
 
-## Métriques système
+## System Metrics
 
-Les ressources CPU/RAM sont lues depuis `/proc` de la machine hôte (bind-mount). Les graphiques historiques sont enregistrés toutes les 5 minutes en SQLite.
+CPU/RAM resources are read from the host's `/proc` (bind-mount). Historical graphs are recorded every 5 minutes in SQLite.
 
-## Mise à jour
+## Update
 
 ```bash
 git pull && docker compose up -d --build web
@@ -130,72 +134,71 @@ git pull && docker compose up -d --build web
 ## Changelog
 
 ### v1.9.0
-- **Feat** : notifications push navigateur — cloche dans la nav, abonnement Web Push (VAPID), notifications connexion/déconnexion joueurs (Android, iOS 16.4+, desktop)
+- **Feat**: browser push notifications — bell in the navbar, Web Push subscription (VAPID), join/leave notifications (Android, iOS 16.4+, desktop)
 
 ### v1.8.0
-- **Feat** : PWA (Progressive Web App) — installation sur mobile (Android/iOS), icône Minecraft pixel art, service worker sans cache (données temps réel)
+- **Feat**: PWA (Progressive Web App) — installable on mobile (Android/iOS), Minecraft pixel art icon, cache-free service worker (real-time data)
 
 ### v1.7.0
-- **Feat** : bouton Discord sur le dashboard — logo SVG officiel blurple, lien configurable dans `/settings`, visible uniquement si renseigné
+- **Feat**: Discord button on dashboard — official blurple SVG logo, configurable link in `/settings`, only shown when set
 
 ### v1.6.2
-- **Fix** : stats temps de jeu — session en cours comptabilisée (join sans leave)
-- **Fix** : purge historique réinitialise `_live_players` → re-log automatique des joueurs connectés en < 30s
+- **Fix**: playtime stats — ongoing session counted (join without leave)
+- **Fix**: history purge resets `_live_players` → automatic re-log of connected players within 30s
 
 ### v1.6.1
-- **UI** : bouton Déconnexion dans la navbar (visible uniquement quand connecté en admin)
-- **UI** : page `/settings` en 2 colonnes (config à gauche, maintenance à droite)
+- **UI**: logout button in navbar (visible only when logged in as admin)
+- **UI**: `/settings` page in 2 columns (config left, maintenance right)
 
 ### v1.6.0
-- **Feat** : section Maintenance dans `/settings` — purge historique connexions (> 30j / 90j / tout), purge métriques charts, VACUUM SQLite avec affichage taille DB
+- **Feat**: Maintenance section in `/settings` — purge connection history (> 30d / 90d / all), purge chart metrics, SQLite VACUUM with DB size display
 
 ### v1.5.1
-- **Fix** : uptime machine affiché dans Ressources système — algorithme générique `CLOCK_BOOTTIME − starttime(PID 1)`, fiable sur LXC Proxmox, VM KVM et bare-metal
-- **Fix** : charts Réseau I/O et Disque I/O toujours plats — race condition entre le flux SSE (fenêtre 5 s) et le recorder (fenêtre 5 min) sur les globals `_prev_*` ; chaque appelant dispose désormais de son propre état
+- **Fix**: machine uptime in System Resources — generic algorithm `CLOCK_BOOTTIME − starttime(PID 1)`, reliable on LXC Proxmox, KVM VM and bare-metal
+- **Fix**: Network I/O and Disk I/O charts always flat — race condition between SSE stream (5s window) and recorder (5min window) on shared `_prev_*` globals; each caller now has its own state
 
 ### v1.5.0
-- Métriques système étendues : disque, réseau KB/s, disque I/O KB/s, uptime VM
-- Nouveaux charts 24 h : CPU/RAM/Disque %, Réseau I/O, Disque I/O
-- `SRV_PATH` configurable dans `.env` pour le monitoring disque
+- Extended system metrics: disk, network KB/s, disk I/O KB/s, VM uptime
+- New 24h charts: CPU/RAM/Disk %, Network I/O, Disk I/O
+- `SRV_PATH` configurable in `.env` for disk monitoring
 
 ### v1.4.0
-- Thème dark / light persisté (localStorage) avec bascule dans la nav
-- Bannière serveur et favicon personnalisables depuis l'interface (upload admin)
-- Uptime serveur Minecraft affiché dans la carte statut (lu depuis `latest.log` + SQLite)
+- Dark / light theme persisted (localStorage) with nav toggle
+- Server banner and favicon customizable from the UI (admin upload)
+- Minecraft server uptime displayed in the status card (read from `latest.log` + SQLite)
 
 ### v1.3.0
-- Page Statistiques : temps de jeu par joueur, heures de pointe, historique graphique (Chart.js)
+- Statistics page: playtime per player, peak hours, historical charts (Chart.js)
 
 ### v1.2.0
-- Modal joueur : UUID, type de skin (Steve/Alex), cape — données Mojang proxiées côté serveur
-- Kick / Ban depuis l'interface (admin, RCON)
+- Player modal: UUID, skin type (Steve/Alex), cape — Mojang data proxied server-side
+- Kick / Ban from the UI (admin, RCON)
 
 ### v1.1.0
-- Mémo des commandes courantes dans la console RCON
-- Remplacement de `mcrcon` par une implémentation RCON async native (fix `signal only works in main thread`)
-- Versioning applicatif (`web/VERSION` affiché dans le footer)
+- RCON command cheatsheet
+- Replaced `mcrcon` with a native async RCON implementation (fix `signal only works in main thread`)
+- App versioning (`web/VERSION` displayed in footer)
 
 ## Roadmap
 
-- ~~Favicon automatique depuis l'icône du serveur Minecraft (status broadcast)~~
-- ~~Gestion de la ban-list depuis l'interface (RCON)~~
-- ~~Support multi-serveurs~~
-- [x] Mode PWA (Progressive Web App) — installation sur mobile
-- [x] Notifications push navigateur (connexion/déconnexion joueurs)
+- ~~Auto favicon from Minecraft server icon (status broadcast)~~
+- ~~Ban-list management from the UI (RCON)~~
+- ~~Multi-server support~~
+- [x] PWA (Progressive Web App) — installable on mobile
+- [x] Browser push notifications (player join/leave)
 
-## Contribution
+## Contributing
 
-Les contributions sont les bienvenues ! Pour proposer une amélioration :
+Contributions are welcome! To propose an improvement:
 
-1. Fork le dépôt
-2. Crée une branche (`git checkout -b feature/ma-feature`)
-3. Commit tes modifications (`git commit -m 'feat: ...'`)
-4. Push (`git push origin feature/ma-feature`)
-5. Ouvre une Pull Request
+1. Fork the repository
+2. Create a branch (`git checkout -b feature/my-feature`)
+3. Commit your changes (`git commit -m 'feat: ...'`)
+4. Push (`git push origin feature/my-feature`)
+5. Open a Pull Request
 
-Pour les bugs, ouvre une issue en décrivant les étapes de reproduction.
+For bugs, open an issue describing the reproduction steps.
 
-## Licence
+## License
 
-MIT — voir [LICENSE](LICENSE).
-
+MIT — see [LICENSE](LICENSE).
