@@ -135,6 +135,16 @@ async def service_worker():
                         headers={"Service-Worker-Allowed": "/"})
 
 
+@app.get("/pwa/icon", include_in_schema=False)
+async def pwa_icon():
+    favicon = MEDIA_PATH / "favicon"
+    if favicon.exists():
+        cfg = read_settings()
+        mime = cfg.get("favicon_mime") or "image/png"
+        return FileResponse(favicon, media_type=mime)
+    return FileResponse("static/icons/icon-192.png", media_type="image/png")
+
+
 @app.get("/manifest.json", include_in_schema=False)
 async def pwa_manifest():
     return JSONResponse({
@@ -146,8 +156,7 @@ async def pwa_manifest():
         "background_color": "#17181c",
         "theme_color": "#5aab28",
         "icons": [
-            {"src": "/static/icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
-            {"src": "/static/icons/icon-512.png",  "sizes": "512x512",  "type": "image/png"},
+            {"src": "/pwa/icon", "sizes": "192x192 512x512", "type": "image/png", "purpose": "any maskable"},
         ],
     })
 
