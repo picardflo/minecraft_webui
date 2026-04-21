@@ -4,7 +4,7 @@ Monitoring dashboard for Minecraft Java Edition servers, with Discord notificati
 
 > 🇫🇷 [Version française](README.fr.md)
 
-![Version](https://img.shields.io/badge/version-1.9.0-green)
+![Version](https://img.shields.io/badge/version-1.10.0-green)
 ![Docker](https://img.shields.io/badge/docker-compose-blue)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -132,6 +132,9 @@ git pull && docker compose up -d --build web
 ```
 
 ## Changelog
+
+### v1.10.0
+- **Feat**: `/api/health` endpoint — Minecraft server status, player count, latency, uptime, version, MOTD; HTTP 200 (online) or 503 (offline); compatible with Zabbix HTTP Agent, Uptime Kuma, Grafana, etc.
 
 ### v1.9.0
 - **Feat**: browser push notifications — bell in the navbar, Web Push subscription (VAPID), join/leave notifications (Android, iOS 16.4+, desktop)

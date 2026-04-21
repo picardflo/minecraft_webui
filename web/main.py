@@ -153,6 +153,32 @@ async def health():
     return {"status": "ok"}
 
 
+@app.get("/api/health")
+async def api_health():
+    status = await get_server_status()
+    uptime_seconds = None
+    if _server_online_since:
+        try:
+            since = datetime.fromisoformat(_server_online_since)
+            uptime_seconds = int((datetime.now(timezone.utc) - since).total_seconds())
+        except Exception:
+            pass
+    payload = {
+        "status": "ok" if status["online"] else "degraded",
+        "minecraft": {
+            "online": status["online"],
+            "players": status["players_online"],
+            "players_max": status["players_max"],
+            "latency_ms": status["latency"],
+            "uptime_seconds": uptime_seconds,
+            "version": status["version"],
+            "motd": status["motd"],
+        },
+        "webui_version": Path("VERSION").read_text().strip(),
+    }
+    return JSONResponse(payload, status_code=200 if status["online"] else 503)
+
+
 @app.get("/sw.js", include_in_schema=False)
 async def service_worker():
     return FileResponse("static/sw.js", media_type="application/javascript",
