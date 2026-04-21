@@ -137,12 +137,13 @@ async def service_worker():
 
 @app.get("/pwa/icon", include_in_schema=False)
 async def pwa_icon():
+    headers = {"Cache-Control": "no-cache, no-store, must-revalidate"}
     favicon = MEDIA_PATH / "favicon"
     if favicon.exists():
         cfg = read_settings()
         mime = cfg.get("favicon_mime") or "image/png"
-        return FileResponse(favicon, media_type=mime)
-    return FileResponse("static/icons/icon-192.png", media_type="image/png")
+        return FileResponse(favicon, media_type=mime, headers=headers)
+    return FileResponse("static/icons/icon-192.png", media_type="image/png", headers=headers)
 
 
 @app.get("/manifest.json", include_in_schema=False)
