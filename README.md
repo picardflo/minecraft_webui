@@ -44,6 +44,8 @@ Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications 
 - Docker + Docker Compose
 - Serveur Minecraft Java avec `enable-status=true` dans `server.properties`
 
+> **Note** : la page Journaux et la détection d'uptime serveur nécessitent que le fichier `latest.log` du serveur Minecraft soit accessible localement sur la machine qui héberge Docker (paramètre `MC_LOG_PATH`). Dans le cas d'un serveur distant, un montage réseau (NFS, sshfs…) peut suffire.
+
 ## Installation
 
 ```bash
