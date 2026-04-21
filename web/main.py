@@ -18,6 +18,7 @@ import db
 from auth import check_password, create_session, is_authenticated
 from config import settings
 from minecraft import get_players, get_server_status
+from pwa import ensure_pwa_icons
 from rcon_client import execute_rcon
 from settings_store import read as read_settings, write as write_settings
 from system import get_system_metrics, get_system_metrics_for_record
@@ -106,6 +107,7 @@ async def metrics_recorder() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    ensure_pwa_icons()
     t1 = asyncio.create_task(player_tracker())
     t2 = asyncio.create_task(metrics_recorder())
     yield
@@ -125,6 +127,29 @@ MEDIA_PATH = Path("/data")
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/sw.js", include_in_schema=False)
+async def service_worker():
+    return FileResponse("static/sw.js", media_type="application/javascript",
+                        headers={"Service-Worker-Allowed": "/"})
+
+
+@app.get("/manifest.json", include_in_schema=False)
+async def pwa_manifest():
+    return JSONResponse({
+        "name": "Minecraft WebUI",
+        "short_name": "MC WebUI",
+        "description": "Lightweight self-hosted monitoring dashboard for Minecraft Java servers",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#17181c",
+        "theme_color": "#5aab28",
+        "icons": [
+            {"src": "/static/icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+            {"src": "/static/icons/icon-512.png",  "sizes": "512x512",  "type": "image/png"},
+        ],
+    })
 
 
 @app.get("/favicon.ico", include_in_schema=False)

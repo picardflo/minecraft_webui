@@ -2,7 +2,7 @@
 
 Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications Discord et console RCON.
 
-![Version](https://img.shields.io/badge/version-1.7.0-green)
+![Version](https://img.shields.io/badge/version-1.8.0-green)
 ![Docker](https://img.shields.io/badge/docker-compose-blue)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -128,6 +128,9 @@ git pull && docker compose up -d --build web
 ```
 
 ## Changelog
+
+### v1.8.0
+- **Feat** : PWA (Progressive Web App) — installation sur mobile (Android/iOS), icône Minecraft pixel art, service worker sans cache (données temps réel)
 
 ### v1.7.0
 - **Feat** : bouton Discord sur le dashboard — logo SVG officiel blurple, lien configurable dans `/settings`, visible uniquement si renseigné
