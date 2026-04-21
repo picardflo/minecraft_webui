@@ -125,6 +125,30 @@ Then fill in the parameters in the `/settings` interface.
 
 CPU/RAM resources are read from the host's `/proc` (bind-mount). Historical graphs are recorded every 5 minutes in SQLite.
 
+## Monitoring / API Health
+
+The `/api/health` endpoint exposes Minecraft server status in JSON:
+
+```json
+{
+  "status": "ok",
+  "minecraft": {
+    "online": true,
+    "players": 3,
+    "players_max": 20,
+    "latency_ms": 0.3,
+    "uptime_seconds": 86400,
+    "version": "1.21.4",
+    "motd": "A Minecraft Server"
+  },
+  "webui_version": "1.10.0"
+}
+```
+
+- HTTP `200` when online, `503` when offline
+- Compatible with **Zabbix HTTP Agent**, **Uptime Kuma**, **Grafana**, `curl`…
+- A ready-to-import **Zabbix 7.0 template** is available in [`docs/zabbix/zbx_minecraft_webui.yaml`](docs/zabbix/zbx_minecraft_webui.yaml) (8 items, 3 triggers)
+
 ## Update
 
 ```bash

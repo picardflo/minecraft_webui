@@ -1,0 +1,127 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: a571c0d144b14fd4a87a9d9b2aa9fcd6
+      name: Templates/Applications
+  templates:
+    - uuid: 15b59c28c7824d56a96df838381cca02
+      template: 'Minecraft WebUI'
+      name: 'Minecraft WebUI'
+      groups:
+        - name: Templates/Applications
+      items:
+        - uuid: 9f5b800a719a4d398d5b9fe0d9017648
+          name: 'Minecraft - Latency'
+          type: DEPENDENT
+          key: minecraft.latency
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.minecraft.latency_ms
+          master_item:
+            key: minecraft.webui.health
+          triggers:
+            - uuid: 5cb9e05c5f7b4e2396d298dc3b8b4852
+              expression: 'last(/Minecraft WebUI/minecraft.latency)>100'
+              recovery_mode: RECOVERY_EXPRESSION
+              recovery_expression: 'last(/Minecraft WebUI/minecraft.latency)<=50'
+              name: 'Minecraft server high latency'
+              priority: WARNING
+        - uuid: 7eefab6150ef48e8a64b427c5ba81c11
+          name: 'Minecraft - MOTD'
+          type: DEPENDENT
+          key: minecraft.motd
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.minecraft.motd
+          master_item:
+            key: minecraft.webui.health
+        - uuid: 3ec6a0d08b464af7bdbe955e5401cf38
+          name: 'Minecraft - Players max'
+          type: DEPENDENT
+          key: minecraft.players.max
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.minecraft.players_max
+          master_item:
+            key: minecraft.webui.health
+        - uuid: 8a0e6967aff24f1587f3ffb8d0282b91
+          name: 'Minecraft - Players online'
+          type: DEPENDENT
+          key: minecraft.players.online
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.minecraft.players
+          master_item:
+            key: minecraft.webui.health
+        - uuid: 0481be346c274bbfac54e2272058a6b3
+          name: 'Minecraft - Server online'
+          type: DEPENDENT
+          key: minecraft.server.online
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.minecraft.online
+            - type: BOOL_TO_DECIMAL
+              parameters:
+                - ''
+          master_item:
+            key: minecraft.webui.health
+          triggers:
+            - uuid: 444c142ecf7a428dafb7a1b49ab98e6c
+              expression: 'last(/Minecraft WebUI/minecraft.server.online)=0'
+              recovery_mode: RECOVERY_EXPRESSION
+              recovery_expression: 'last(/Minecraft WebUI/minecraft.server.online)=1'
+              name: 'Minecraft server is DOWN'
+              priority: HIGH
+        - uuid: a0316749fd7041df946b9c7060b7b7c4
+          name: 'Minecraft - Server uptime'
+          type: DEPENDENT
+          key: minecraft.server.uptime
+          delay: '0'
+          units: s
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.minecraft.uptime_seconds
+          master_item:
+            key: minecraft.webui.health
+        - uuid: db3dd412f5ae4c899aa2e1d994d01be0
+          name: 'Minecraft - Version'
+          type: DEPENDENT
+          key: minecraft.version
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.minecraft.version
+          master_item:
+            key: minecraft.webui.health
+        - uuid: 2ea8c106cb474db79839cfdeb01567b4
+          name: 'Minecraft WebUI - Health (raw)'
+          type: HTTP_AGENT
+          key: minecraft.webui.health
+          value_type: TEXT
+          trends: '0'
+          url: 'https://{HOST.HOST}/api/health'
+  triggers:
+    - uuid: 8bcb8ca6d15749b4a67cab996753bda7
+      expression: 'last(/Minecraft WebUI/minecraft.players.online)=last(/Minecraft WebUI/minecraft.players.max) and last(/Minecraft WebUI/minecraft.players.max)>0'
+      recovery_mode: RECOVERY_EXPRESSION
+      recovery_expression: 'last(/Minecraft WebUI/minecraft.players.online)<last(/Minecraft WebUI/minecraft.players.max)'
+      name: 'Minecraft server is full'
+      priority: INFO
