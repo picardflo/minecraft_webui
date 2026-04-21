@@ -40,6 +40,15 @@ async def init_db() -> None:
                 value TEXT
             )
         """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS push_subscriptions (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                endpoint   TEXT UNIQUE NOT NULL,
+                p256dh     TEXT NOT NULL,
+                auth       TEXT NOT NULL,
+                created_at DATETIME DEFAULT (datetime('now'))
+            )
+        """)
         await db.commit()
 
 
@@ -185,6 +194,28 @@ async def get_player_stats() -> list[dict]:
             pass
 
     return sorted(players.values(), key=lambda x: x["total_seconds"], reverse=True)
+
+
+async def save_push_subscription(sub: dict) -> None:
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "INSERT OR REPLACE INTO push_subscriptions (endpoint, p256dh, auth) VALUES (?, ?, ?)",
+            (sub["endpoint"], sub["keys"]["p256dh"], sub["keys"]["auth"]),
+        )
+        await db.commit()
+
+
+async def delete_push_subscription(endpoint: str) -> None:
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("DELETE FROM push_subscriptions WHERE endpoint = ?", (endpoint,))
+        await db.commit()
+
+
+async def get_push_subscriptions() -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute("SELECT endpoint, p256dh, auth FROM push_subscriptions") as cur:
+            rows = await cur.fetchall()
+    return [{"endpoint": r[0], "keys": {"p256dh": r[1], "auth": r[2]}} for r in rows]
 
 
 async def get_peak_hours() -> list[dict]:

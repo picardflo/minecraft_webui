@@ -18,6 +18,7 @@ import db
 from auth import check_password, create_session, is_authenticated
 from config import settings
 from minecraft import get_players, get_server_status
+from push import generate_vapid_keys, send_push
 from pwa import ensure_pwa_icons
 from rcon_client import execute_rcon
 from settings_store import read as read_settings, write as write_settings
@@ -46,6 +47,20 @@ def _server_start_from_log() -> str | None:
     return None
 
 
+async def _notify_push(name: str, event: str) -> None:
+    cfg = read_settings()
+    private = cfg.get("vapid_private")
+    if not private:
+        return
+    subs = await db.get_push_subscriptions()
+    if not subs:
+        return
+    emoji = "🟢" if event == "join" else "🔴"
+    action = "Connexion" if event == "join" else "Déconnexion"
+    for sub in subs:
+        await asyncio.to_thread(send_push, sub, f"Minecraft — {name}", f"{emoji} {action}", private)
+
+
 async def player_tracker() -> None:
     global _live_players, _server_online_since
     await db.init_db()
@@ -61,9 +76,11 @@ async def player_tracker() -> None:
             for name, uuid in current.items():
                 if name not in _live_players:
                     await db.record_event(name, uuid, "join")
+                    asyncio.create_task(_notify_push(name, "join"))
             for name, uuid in _live_players.items():
                 if name not in current:
                     await db.record_event(name, uuid, "leave")
+                    asyncio.create_task(_notify_push(name, "leave"))
             _live_players = current
         except Exception as e:
             print(f"[tracker] {e}")
@@ -108,6 +125,10 @@ async def metrics_recorder() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     ensure_pwa_icons()
+    cfg = read_settings()
+    if not cfg.get("vapid_private"):
+        priv, pub = generate_vapid_keys()
+        write_settings({"vapid_private": priv, "vapid_public": pub})
     t1 = asyncio.create_task(player_tracker())
     t2 = asyncio.create_task(metrics_recorder())
     yield
@@ -185,6 +206,24 @@ async def media_banner():
 
 
 # ── SSE ──────────────────────────────────────────────────────────────────────
+
+@app.get("/push/vapid-public-key", include_in_schema=False)
+async def push_vapid_key():
+    return JSONResponse({"key": read_settings().get("vapid_public", "")})
+
+
+@app.post("/push/subscribe", include_in_schema=False)
+async def push_subscribe(request: Request):
+    await db.save_push_subscription(await request.json())
+    return JSONResponse({"ok": True})
+
+
+@app.delete("/push/unsubscribe", include_in_schema=False)
+async def push_unsubscribe(request: Request):
+    body = await request.json()
+    await db.delete_push_subscription(body.get("endpoint", ""))
+    return JSONResponse({"ok": True})
+
 
 @app.get("/stream/dashboard")
 async def stream_dashboard(request: Request):

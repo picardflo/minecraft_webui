@@ -251,6 +251,9 @@
       <span class="material-icons-round">bar_chart</span> Stats
     </a>
     <div class="nav-spacer"></div>
+    <button class="nav-theme-btn" id="notif-btn" onclick="toggleNotifications()" title="Notifications push" style="display:none">
+      <span class="material-icons-round" id="notif-icon">notifications_none</span>
+    </button>
     <button class="nav-theme-btn" onclick="toggleTheme()" title="Changer de thème">
       <span class="material-icons-round" id="theme-icon">light_mode</span>
     </button>
@@ -294,6 +297,40 @@
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js');
   }
+
+  function _urlB64ToUint8(b64) {
+    const pad = '='.repeat((4 - b64.length % 4) % 4);
+    const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    const arr = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return arr;
+  }
+
+  async function toggleNotifications() {
+    if (!('PushManager' in window)) return;
+    const reg = await navigator.serviceWorker.ready;
+    const existing = await reg.pushManager.getSubscription();
+    if (existing) {
+      await existing.unsubscribe();
+      await fetch('/push/unsubscribe', {method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({endpoint: existing.endpoint})});
+      document.getElementById('notif-icon').textContent = 'notifications_none';
+    } else {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') return;
+      const {key} = await fetch('/push/vapid-public-key').then(r => r.json());
+      const sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: _urlB64ToUint8(key)});
+      await fetch('/push/subscribe', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(sub.toJSON())});
+      document.getElementById('notif-icon').textContent = 'notifications_active';
+    }
+  }
+
+  (async function initNotifBtn() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    document.getElementById('notif-btn').style.display = '';
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) document.getElementById('notif-icon').textContent = 'notifications_active';
+  })();
 </script>
 </body>
 </html>

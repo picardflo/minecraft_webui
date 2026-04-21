@@ -13,6 +13,8 @@ _defaults: dict = {
     "favicon_mime": "",
     "favicon_version": 0,
     "discord_server_url": "",
+    "vapid_private": "",
+    "vapid_public": "",
 }
 
 
