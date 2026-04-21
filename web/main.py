@@ -135,6 +135,8 @@ async def service_worker():
                         headers={"Service-Worker-Allowed": "/"})
 
 
+_PWA_SAFE_MIMES = {"image/png", "image/jpeg", "image/webp"}
+
 @app.get("/pwa/icon", include_in_schema=False)
 async def pwa_icon():
     headers = {"Cache-Control": "no-cache, no-store, must-revalidate"}
@@ -142,7 +144,8 @@ async def pwa_icon():
     if favicon.exists():
         cfg = read_settings()
         mime = cfg.get("favicon_mime") or "image/png"
-        return FileResponse(favicon, media_type=mime, headers=headers)
+        if mime in _PWA_SAFE_MIMES:
+            return FileResponse(favicon, media_type=mime, headers=headers)
     return FileResponse("static/icons/icon-192.png", media_type="image/png", headers=headers)
 
 
