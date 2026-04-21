@@ -119,6 +119,7 @@ app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["version"] = Path("VERSION").read_text().strip()
+templates.env.globals["favicon_v"] = lambda: read_settings().get("favicon_version", 0)
 
 
 MEDIA_PATH = Path("/data")
@@ -445,6 +446,7 @@ async def settings_save(
         if content:
             (MEDIA_PATH / "favicon").write_bytes(content)
             cfg_update["favicon_mime"] = mimetypes.guess_type(favicon_file.filename)[0] or "image/png"
+            cfg_update["favicon_version"] = int(datetime.now(timezone.utc).timestamp())
 
     write_settings(cfg_update)
     return RedirectResponse("/settings?saved=1", status_code=302)
