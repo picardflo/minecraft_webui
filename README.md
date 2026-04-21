@@ -177,9 +177,9 @@ git pull && docker compose up -d --build web
 
 ## Roadmap
 
-- [ ] Favicon automatique depuis l'icône du serveur Minecraft (status broadcast)
+- ~~Favicon automatique depuis l'icône du serveur Minecraft (status broadcast)~~
 - ~~Gestion de la ban-list depuis l'interface (RCON)~~
-- [ ] Support multi-serveurs
+- ~~Support multi-serveurs~~
 - [x] Mode PWA (Progressive Web App) — installation sur mobile
 - [x] Notifications push navigateur (connexion/déconnexion joueurs)
 
