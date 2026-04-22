@@ -1,0 +1,33 @@
+# Minecraft WebUI — Homepage widget (https://gethomepage.dev)
+#
+# Ajouter ce bloc dans votre services.yaml Homepage.
+# Remplacer YOUR_DOMAIN par votre domaine (ex: minecraft.home.lan, mc.example.com).
+
+- Gaming:
+    - Minecraft WebUI:
+        href: https://YOUR_DOMAIN
+        description: Serveur Minecraft Java
+        ping: https://YOUR_DOMAIN
+        icon: minecraft
+        widget:
+          type: customapi
+          url: https://YOUR_DOMAIN/api/health
+          refreshInterval: 30000
+          mappings:
+            - field:
+                minecraft: players
+              label: Players
+              format: number
+            - field:
+                minecraft: players_max
+              label: Max
+              format: number
+            - field:
+                minecraft: latency_ms
+              label: Latency
+              format: float
+              suffix: ms
+            - field:
+                minecraft: version
+              label: Version
+              format: text

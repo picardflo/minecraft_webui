@@ -146,6 +146,7 @@ L'endpoint `/api/health` expose le statut du serveur Minecraft en JSON :
 - HTTP `200` si en ligne, `503` si hors ligne
 - Compatible **Zabbix HTTP Agent**, **Uptime Kuma**, **Grafana**, `curl`…
 - Un **template Zabbix 7.0** prêt à importer est disponible dans [`docs/zabbix/zbx_minecraft_webui.yaml`](docs/zabbix/zbx_minecraft_webui.yaml) (8 items, 3 triggers)
+- Un **widget Homepage** prêt à l'emploi est disponible dans [`docs/homepage/services.yaml`](docs/homepage/services.yaml)
 
 ## Mise à jour
 
