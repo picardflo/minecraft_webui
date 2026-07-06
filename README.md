@@ -4,7 +4,7 @@ Monitoring dashboard for Minecraft Java Edition servers, with Discord notificati
 
 > 🇫🇷 [Version française](README.fr.md)
 
-![Version](https://img.shields.io/badge/version-1.10.0-green)
+![Version](https://img.shields.io/badge/version-1.10.1-green)
 ![Docker](https://img.shields.io/badge/docker-compose-blue)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -48,7 +48,7 @@ Monitoring dashboard for Minecraft Java Edition servers, with Discord notificati
 - Docker + Docker Compose
 - Minecraft Java server with `enable-status=true` in `server.properties`
 
-> **Note**: the Logs page and server uptime detection require the Minecraft `latest.log` file to be accessible locally on the Docker host (via the `MC_LOG_PATH` setting). For a remote server, a network mount (NFS, sshfs…) is sufficient.
+> **Note**: the Logs page and server uptime detection require the Minecraft `logs` directory to be accessible locally on the Docker host (via the `MC_LOG_DIR` setting). The whole directory is mounted — not the single `latest.log` file — because mounting a single file freezes the view on each log rotation. For a remote server, a network mount (NFS, sshfs…) is sufficient.
 
 ## Installation
 
@@ -67,7 +67,7 @@ docker compose up -d --build
 ```env
 MC_HOST=your.minecraft.server.com   # Minecraft server address
 MC_PORT=25565                        # Java port (default 25565)
-MC_LOG_PATH=/srv/minecraft/server/logs/latest.log
+MC_LOG_DIR=/srv/minecraft/server/logs      # server logs dir (not the file alone)
 
 ADMIN_PASSWORD=changeme              # Password for /settings and /console
 SECRET_KEY=change-this-to-a-long-random-string
@@ -141,7 +141,7 @@ The `/api/health` endpoint exposes Minecraft server status in JSON:
     "version": "1.21.4",
     "motd": "A Minecraft Server"
   },
-  "webui_version": "1.10.0"
+  "webui_version": "1.10.1"
 }
 ```
 
@@ -157,6 +157,9 @@ git pull && docker compose up -d --build web
 ```
 
 ## Changelog
+
+### v1.10.1
+- **Fix**: Logs page froze after a server restart / log rotation — the Docker volume mounted the single `latest.log` file, so the container stayed pinned to the old inode once Minecraft recreated the file. Now mounts the whole `logs` directory (`MC_LOG_DIR`).
 
 ### v1.10.0
 - **Feat**: `/api/health` endpoint — Minecraft server status, player count, latency, uptime, version, MOTD; HTTP 200 (online) or 503 (offline); compatible with Zabbix HTTP Agent, Uptime Kuma, Grafana, etc.

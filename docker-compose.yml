@@ -4,7 +4,7 @@ services:
     build: ./web
     restart: unless-stopped
     volumes:
-      - ${MC_LOG_PATH:-/srv/minecraft/server/logs/latest.log}:/logs/latest.log:ro
+      - ${MC_LOG_DIR:-/srv/minecraft/server/logs}:/logs:ro
       - /proc:/host/proc:ro
       - ${SRV_PATH:-/srv}:/host/srv:ro
       - app_data:/data

@@ -4,7 +4,7 @@ Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications 
 
 > 🇬🇧 [English version](README.md)
 
-![Version](https://img.shields.io/badge/version-1.10.0-green)
+![Version](https://img.shields.io/badge/version-1.10.1-green)
 ![Docker](https://img.shields.io/badge/docker-compose-blue)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -46,7 +46,7 @@ Dashboard de monitoring pour serveur Minecraft Java Edition, avec notifications 
 - Docker + Docker Compose
 - Serveur Minecraft Java avec `enable-status=true` dans `server.properties`
 
-> **Note** : la page Journaux et la détection d'uptime serveur nécessitent que le fichier `latest.log` du serveur Minecraft soit accessible localement sur la machine qui héberge Docker (paramètre `MC_LOG_PATH`). Dans le cas d'un serveur distant, un montage réseau (NFS, sshfs…) peut suffire.
+> **Note** : la page Journaux et la détection d'uptime serveur nécessitent que le dossier `logs` du serveur Minecraft soit accessible localement sur la machine qui héberge Docker (paramètre `MC_LOG_DIR`). C'est le dossier entier qui est monté — et non le seul fichier `latest.log` — car monter un fichier unique gèle l'affichage à chaque rotation du journal. Dans le cas d'un serveur distant, un montage réseau (NFS, sshfs…) peut suffire.
 
 ## Installation
 
@@ -65,7 +65,7 @@ docker compose up -d --build
 ```env
 MC_HOST=your.minecraft.server.com   # Adresse du serveur Minecraft
 MC_PORT=25565                        # Port Java (défaut 25565)
-MC_LOG_PATH=/srv/minecraft/server/logs/latest.log
+MC_LOG_DIR=/srv/minecraft/server/logs      # dossier logs (pas le fichier seul)
 
 ADMIN_PASSWORD=changeme              # Mot de passe pour /settings et /console
 SECRET_KEY=change-this-to-a-long-random-string
@@ -139,7 +139,7 @@ L'endpoint `/api/health` expose le statut du serveur Minecraft en JSON :
     "version": "1.21.4",
     "motd": "A Minecraft Server"
   },
-  "webui_version": "1.10.0"
+  "webui_version": "1.10.1"
 }
 ```
 
@@ -155,6 +155,9 @@ git pull && docker compose up -d --build web
 ```
 
 ## Changelog
+
+### v1.10.1
+- **Fix** : la page Journaux gelait après un redémarrage / une rotation de log — le volume Docker montait le seul fichier `latest.log`, le conteneur restait donc figé sur l'ancien inode dès que Minecraft recréait le fichier. Le dossier `logs` complet est désormais monté (`MC_LOG_DIR`).
 
 ### v1.10.0
 - **Feat** : endpoint `/api/health` — statut serveur Minecraft, joueurs, latence, uptime, version, MOTD ; HTTP 200 (en ligne) ou 503 (hors ligne) ; compatible Zabbix HTTP Agent, Uptime Kuma, Grafana, etc.
