@@ -143,8 +143,14 @@ L'endpoint `/api/health` expose le statut du serveur Minecraft en JSON :
 }
 ```
 
-- HTTP `200` si en ligne, `503` si hors ligne
+- HTTP `200` si en ligne, `503` si hors ligne — **le corps JSON est le même dans les deux cas**, seul `minecraft.online` change
 - Compatible **Zabbix HTTP Agent**, **Uptime Kuma**, **Grafana**, `curl`…
+
+> ⚠️ **Si vous sondez cet endpoint, acceptez le 503.** Un superviseur qui n'attend
+> que le code `200` traite la réponse « hors ligne » comme une erreur de transport :
+> il n'enregistre aucune valeur, ses métriques gèlent sur la dernière connue, et
+> l'alerte « serveur hors ligne » ne part jamais. Côté Zabbix, le champ est
+> *Required status codes* → `200,503` ; le gabarit fourni le déclare.
 - Un **template Zabbix 7.0** prêt à importer est disponible dans [`docs/zabbix/zbx_minecraft_webui.yaml`](docs/zabbix/zbx_minecraft_webui.yaml) (8 items, 3 triggers)
 - Un **widget Homepage** prêt à l'emploi est disponible dans [`docs/homepage/services.yaml`](docs/homepage/services.yaml)
 
@@ -155,6 +161,11 @@ git pull && docker compose up -d --build web
 ```
 
 ## Changelog
+
+### v1.10.2
+- **Fix** : gabarit Zabbix — l'item `Minecraft WebUI - Health (raw)` n'acceptait que le code HTTP `200`. Comme `/api/health` répond `503` quand le serveur est hors ligne, Zabbix rejetait la réponse, l'item passait *non supporté*, et les items dépendants gelaient sur leur dernière valeur. Résultat : `minecraft.server.online` restait bloqué à `1` et le déclencheur **« Minecraft server is DOWN » n'avait jamais pu se déclencher depuis sa création** — vérifié le 12 septembre 2026 sur une panne réelle de trois minutes, qui n'a produit aucune alerte. Le gabarit déclare désormais `status_codes: '200,503'`.
+
+  **À appliquer aussi sur une instance déjà importée** : le ré-import ne met pas à jour un item existant si le gabarit était lié — corriger le champ *Required status codes* directement sur l'item.
 
 ### v1.10.1
 - **Fix** : la page Journaux gelait après un redémarrage / une rotation de log — le volume Docker montait le seul fichier `latest.log`, le conteneur restait donc figé sur l'ancien inode dès que Minecraft recréait le fichier. Le dossier `logs` complet est désormais monté (`MC_LOG_DIR`).

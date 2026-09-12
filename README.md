@@ -145,8 +145,14 @@ The `/api/health` endpoint exposes Minecraft server status in JSON:
 }
 ```
 
-- HTTP `200` when online, `503` when offline
+- HTTP `200` when online, `503` when offline — **the JSON body is identical in both cases**, only `minecraft.online` changes
 - Compatible with **Zabbix HTTP Agent**, **Uptime Kuma**, **Grafana**, `curl`…
+
+> ⚠️ **If you poll this endpoint, accept the 503.** A monitor that only expects
+> `200` treats the "offline" answer as a transport error: it stores no value, its
+> metrics freeze on the last known one, and the "server down" alert never fires.
+> In Zabbix the field is *Required status codes* → `200,503`; the bundled template
+> declares it.
 - A ready-to-import **Zabbix 7.0 template** is available in [`docs/zabbix/zbx_minecraft_webui.yaml`](docs/zabbix/zbx_minecraft_webui.yaml) (8 items, 3 triggers)
 - A **Homepage widget** config is available in [`docs/homepage/services.yaml`](docs/homepage/services.yaml)
 
@@ -157,6 +163,11 @@ git pull && docker compose up -d --build web
 ```
 
 ## Changelog
+
+### v1.10.2
+- **Fix**: Zabbix template — the `Minecraft WebUI - Health (raw)` item only accepted HTTP `200`. Since `/api/health` answers `503` when the server is offline, Zabbix rejected the response, the item turned *unsupported*, and its dependent items froze on their last value. As a result `minecraft.server.online` stayed stuck at `1` and the **"Minecraft server is DOWN" trigger had never been able to fire since its creation** — verified on 12 September 2026 against a real three-minute outage that produced no alert. The template now declares `status_codes: '200,503'`.
+
+  **Apply it to an already-imported instance too**: re-importing does not update an existing linked item — fix the *Required status codes* field on the item itself.
 
 ### v1.10.1
 - **Fix**: Logs page froze after a server restart / log rotation — the Docker volume mounted the single `latest.log` file, so the container stayed pinned to the old inode once Minecraft recreated the file. Now mounts the whole `logs` directory (`MC_LOG_DIR`).

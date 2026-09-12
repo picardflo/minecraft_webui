@@ -118,6 +118,19 @@ zabbix_export:
           value_type: TEXT
           trends: '0'
           url: 'https://{HOST.HOST}/api/health'
+          # 503 EST UNE REPONSE VALIDE, PAS UNE ERREUR.
+          #
+          # /api/health repond 503 quand le serveur Minecraft est hors ligne, avec
+          # le meme corps JSON et « online: false ». Or Zabbix n'accepte que 200
+          # par defaut : la reponse etait rejetee, l'item passait NON SUPPORTE, et
+          # aucune valeur n'etait enregistree.
+          #
+          # Consequence mesuree le 12 septembre 2026 : les items dependants
+          # gelaient sur leur derniere valeur, « minecraft.server.online » restait
+          # a 1, et le declencheur « Minecraft server is DOWN » n'avait JAMAIS
+          # bascule depuis sa creation. Une panne de trois minutes, agent debout,
+          # n'a produit aucune alerte.
+          status_codes: '200,503'
   triggers:
     - uuid: 8bcb8ca6d15749b4a67cab996753bda7
       expression: 'last(/Minecraft WebUI/minecraft.players.online)=last(/Minecraft WebUI/minecraft.players.max) and last(/Minecraft WebUI/minecraft.players.max)>0'
