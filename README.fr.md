@@ -157,8 +157,13 @@ L'endpoint `/api/health` expose le statut du serveur Minecraft en JSON :
 ## Mise à jour
 
 ```bash
-git pull && docker compose up -d --build web
+git pull && docker compose up -d --build
 ```
+
+> Reconstruire **tous** les services, pas seulement `web`. Certaines versions
+> modifient `docker-compose.yml` lui-même (la v1.10.3 y ajoute `TZ` sur les
+> trois services) : restreindre la commande à `web` laisse les autres sur
+> leur ancienne définition.
 
 ## Changelog
 
