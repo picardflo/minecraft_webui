@@ -4,7 +4,7 @@ Monitoring dashboard for Minecraft Java Edition servers, with Discord notificati
 
 > 🇫🇷 [Version française](README.fr.md)
 
-![Version](https://img.shields.io/badge/version-1.10.1-green)
+![Version](https://img.shields.io/badge/version-1.10.4-green)
 ![Docker](https://img.shields.io/badge/docker-compose-blue)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -141,7 +141,7 @@ The `/api/health` endpoint exposes Minecraft server status in JSON:
     "version": "1.21.4",
     "motd": "A Minecraft Server"
   },
-  "webui_version": "1.10.1"
+  "webui_version": "1.10.4"
 }
 ```
 
@@ -167,6 +167,28 @@ git pull && docker compose up -d --build
 > narrowing the command to `web` leaves the others on their old definition.
 
 ## Changelog
+
+### v1.10.4
+- **Fix**: the dashboard memory gauge showed the `web` container's own memory
+  (~51 MiB, i.e. "0 / 16 GB") instead of the machine's (8.7 GiB of 16). Under a
+  Proxmox LXC, `lxcfs` answers `/proc/meminfo` **according to the cgroup of the
+  process doing the reading**: the Docker container sits in a nested cgroup, so it
+  got its own consumption back. Mounting the host's `/proc` changed nothing — what
+  matters is the identity of the reader, not the path of the file.
+
+  Memory is now read from two sources and the larger of the two is kept, the only
+  known failure mode being under-estimation: `psutil`, and the host root cgroup
+  (`memory.current` minus the reclaimable file cache, cgroup v1 supported),
+  mounted read-only as `/host/cgroup` by `docker-compose.yml`. This holds for the
+  three deployments: on **bare metal** and in a **KVM VM** `/proc/meminfo` already
+  describes the whole machine and the root cgroup exposes no `memory.current`, so
+  `psutil` is used; in an **LXC** the root cgroup is the container's own and
+  supplies the right figure. The total always comes from `psutil`, which is
+  accurate everywhere. The `psutil` reading now uses `MemAvailable` rather than
+  `used`.
+
+  **After deploying**, run `docker compose up -d --build` (and not just the `web`
+  service): this version changes `docker-compose.yml` itself.
 
 ### v1.10.3
 - **Fix**: negative `uptime_seconds` on any host not running in UTC.

@@ -9,6 +9,78 @@ from config import settings
 if settings.host_proc:
     psutil.PROCFS_PATH = settings.host_proc
 
+# ── Mémoire de la machine ───────────────────────────────────────────────────
+# Trois environnements à couvrir, avec la même sortie : la mémoire de la MACHINE
+# qui héberge le serveur Minecraft.
+#
+#   Serveur physique / VM KVM — /proc/meminfo (via /host/proc) décrit déjà la
+#       machine entière : psutil est exact. Le cgroup racine n'expose pas
+#       memory.current (fichier réservé aux cgroups enfants), la lecture cgroup
+#       rend donc None d'elle-même. En cgroup v1 le fichier racine existe et
+#       décrit lui aussi la machine entière : les deux sources concordent.
+#
+#   LXC Proxmox — lxcfs répond à /proc/meminfo EN FONCTION DU CGROUP DU LECTEUR.
+#       Le lecteur est le process Python du conteneur `web`, dans un cgroup
+#       imbriqué : psutil renvoie la conso du conteneur (~51 Mio) et non celle du
+#       LXC. Monter le /proc de l'hôte n'y change rien — c'est l'identité du
+#       lecteur qui compte, pas le chemin du fichier. Le cgroup racine vu depuis
+#       le LXC EST celui du LXC : memory.current y donne la bonne valeur.
+#
+# Le seul mode de panne connu est donc la SOUS-estimation (un cgroup imbriqué ne
+# voit qu'une fraction de la machine) : on retient la plus grande des deux
+# lectures, ce qui reste correct dans les trois cas même si le montage
+# /host/cgroup est absent, partiel ou mal ciblé.
+#
+# `total` vient toujours de psutil : il est exact partout — RAM physique sur
+# bare-metal, RAM de la VM en KVM, limite du conteneur en LXC (via lxcfs).
+
+
+def _stat_field(path: Path, key: str) -> int:
+    """Valeur d'une clé d'un fichier memory.stat, 0 si absente ou illisible."""
+    try:
+        for line in path.read_text().splitlines():
+            name, _, value = line.partition(" ")
+            if name == key:
+                return int(value)
+    except Exception:
+        pass
+    return 0
+
+
+def _cgroup_used() -> int | None:
+    """Mémoire utilisée du cgroup racine hôte, ou None si indisponible."""
+    base = Path(settings.host_cgroup)
+    # (fichier d'usage, fichier de stats, clé du cache réclamable)
+    layouts = (
+        ("memory.current", "memory.stat", "inactive_file"),                          # v2
+        ("memory/memory.usage_in_bytes", "memory/memory.stat", "total_inactive_file"),  # v1
+    )
+    for usage, stat, cache_key in layouts:
+        try:
+            used = int((base / usage).read_text().split()[0])
+        except Exception:
+            continue
+        # L'usage cgroup inclut le cache de fichiers réclamable ; on le retire
+        # pour obtenir une valeur comparable au « used » de `free`
+        # (convention docker stats / cAdvisor).
+        return max(0, used - _stat_field(base / stat, cache_key))
+    return None
+
+
+def _memory() -> tuple[int, int]:
+    """(utilisé, total) en octets — physique, VM ou LXC."""
+    ram = psutil.virtual_memory()
+    # total - available plutôt que .used : MemAvailable tient compte du cache
+    # réclamable et reflète mieux la mémoire réellement indisponible.
+    used, total = ram.total - ram.available, ram.total
+
+    cgroup_used = _cgroup_used()
+    if cgroup_used is not None:
+        used = max(used, cgroup_used)
+
+    return max(0, min(used, total)), total
+
+
 # État partagé SSE (fenêtre ~5s)
 _prev_net  = None
 _prev_disk = None
@@ -22,8 +94,10 @@ _prev_ts_rec   = None
 
 def _compute_metrics(prev_net, prev_disk, prev_ts) -> tuple[dict, object, object, float]:
     """Calcule les métriques et renvoie (résultats, net_c, disk_c, now)."""
-    ram  = psutil.virtual_memory()
     swap = psutil.swap_memory()
+
+    ram_used, ram_total = _memory()
+    ram_pct = round(ram_used / ram_total * 100, 1) if ram_total else 0.0
 
     try:
         disk = psutil.disk_usage(settings.host_srv)
@@ -62,9 +136,9 @@ def _compute_metrics(prev_net, prev_disk, prev_ts) -> tuple[dict, object, object
 
     metrics = {
         "cpu":           round(psutil.cpu_percent(interval=0.5), 1),
-        "ram_pct":       round(ram.percent, 1),
-        "ram_used_gb":   round(ram.used  / 1024**3, 1),
-        "ram_total_gb":  round(ram.total / 1024**3, 1),
+        "ram_pct":       ram_pct,
+        "ram_used_gb":   round(ram_used  / 1024**3, 1),
+        "ram_total_gb":  round(ram_total / 1024**3, 1),
         "swap_pct":      round(swap.percent, 1),
         "swap_used_gb":  round(swap.used  / 1024**3, 1),
         "swap_total_gb": round(swap.total / 1024**3, 1),

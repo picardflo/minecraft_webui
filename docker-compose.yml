@@ -6,6 +6,7 @@ services:
     volumes:
       - ${MC_LOG_DIR:-/srv/minecraft/server/logs}:/logs:ro
       - /proc:/host/proc:ro
+      - /sys/fs/cgroup:/host/cgroup:ro
       - ${SRV_PATH:-/srv}:/host/srv:ro
       - app_data:/data
     environment:
@@ -13,6 +14,7 @@ services:
       - MC_PORT
       - HOST_PROC=/host/proc
       - HOST_SRV=/host/srv
+      - HOST_CGROUP=/host/cgroup
       - SETTINGS_PATH=/data/settings.json
       - ADMIN_PASSWORD
       - SECRET_KEY
