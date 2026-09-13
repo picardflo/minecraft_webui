@@ -164,6 +164,22 @@ git pull && docker compose up -d --build web
 
 ## Changelog
 
+### v1.10.3
+- **Fix**: negative `uptime_seconds` on any host not running in UTC.
+  `_server_start_from_log()` labelled as `timezone.utc` a time that Minecraft
+  writes to `latest.log` in **local time**: the start instant ended up shifted by
+  the local offset (−2 h in CEST), and the UI displayed "Online for −6865 s". The
+  time is now interpreted as local via `astimezone()`. The bug stayed hidden as
+  long as the host ran in UTC.
+- **Fix**: `TZ` declared for all three services in `docker-compose.yml` and
+  documented in `.env.example` — the container must share the timezone of the
+  machine writing the log. `tzdata` added to `web/Dockerfile`, without which `TZ`
+  has no effect on `python:3.12-slim`.
+
+  **After deploying**, restart the Minecraft server (`systemctl restart
+  minecraft`): the wrong value is persisted in the database and is only
+  recomputed when the server goes offline then back online.
+
 ### v1.10.2
 - **Fix**: Zabbix template — the `Minecraft WebUI - Health (raw)` item only accepted HTTP `200`. Since `/api/health` answers `503` when the server is offline, Zabbix rejected the response, the item turned *unsupported*, and its dependent items froze on their last value. As a result `minecraft.server.online` stayed stuck at `1` and the **"Minecraft server is DOWN" trigger had never been able to fire since its creation** — verified on 12 September 2026 against a real three-minute outage that produced no alert. The template now declares `status_codes: '200,503'`.
 

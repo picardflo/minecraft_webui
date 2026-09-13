@@ -162,6 +162,22 @@ git pull && docker compose up -d --build web
 
 ## Changelog
 
+### v1.10.3
+- **Fix** : `uptime_seconds` négatif sur toute machine hors UTC.
+  `_server_start_from_log()` étiquetait en `timezone.utc` une heure que Minecraft
+  écrit en **heure locale** dans `latest.log` : l'instant de démarrage se
+  retrouvait décalé du fuseau (−2 h en CEST), et l'interface affichait « En ligne
+  depuis −6865 s ». L'heure est désormais interprétée en heure locale via
+  `astimezone()`. Le bug était masqué tant que l'hôte tournait en UTC.
+- **Fix** : `TZ` déclaré pour les trois services dans `docker-compose.yml` et
+  documenté dans `.env.example` — le conteneur doit partager le fuseau de la
+  machine qui écrit le log. `tzdata` ajouté à `web/Dockerfile`, sans quoi `TZ`
+  reste sans effet sur `python:3.12-slim`.
+
+  **Après déploiement**, redémarrer le serveur Minecraft (`systemctl restart
+  minecraft`) : la valeur fausse est persistée en base et n'est recalculée que
+  lorsque le serveur repasse hors ligne puis en ligne.
+
 ### v1.10.2
 - **Fix** : gabarit Zabbix — l'item `Minecraft WebUI - Health (raw)` n'acceptait que le code HTTP `200`. Comme `/api/health` répond `503` quand le serveur est hors ligne, Zabbix rejetait la réponse, l'item passait *non supporté*, et les items dépendants gelaient sur leur dernière valeur. Résultat : `minecraft.server.online` restait bloqué à `1` et le déclencheur **« Minecraft server is DOWN » n'avait jamais pu se déclencher depuis sa création** — vérifié le 12 septembre 2026 sur une panne réelle de trois minutes, qui n'a produit aucune alerte. Le gabarit déclare désormais `status_codes: '200,503'`.
 

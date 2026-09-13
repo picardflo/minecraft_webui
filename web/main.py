@@ -37,11 +37,12 @@ def _server_start_from_log() -> str | None:
             for line in f:
                 m = re.match(r'\[(\d{2}:\d{2}:\d{2})\]', line.strip())
                 if m:
-                    log_date = datetime.fromtimestamp(
-                        log_path.stat().st_ctime, tz=timezone.utc
-                    ).date()
+                    # Minecraft écrit l'heure des logs en HEURE LOCALE : on
+                    # reste en naïf/local puis astimezone() attache le décalage
+                    # courant (gère aussi le passage heure d'été / hiver).
+                    log_date = datetime.fromtimestamp(log_path.stat().st_ctime).date()
                     t = datetime.strptime(m.group(1), "%H:%M:%S").time()
-                    return datetime.combine(log_date, t, tzinfo=timezone.utc).isoformat()
+                    return datetime.combine(log_date, t).astimezone().isoformat()
     except Exception:
         return None
     return None
